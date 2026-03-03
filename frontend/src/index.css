@@ -1,0 +1,155 @@
+/* PRIMERO el @import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* LUEGO Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Importar fuente Inter de Google Fonts */
+
+
+/* ─── Variables CSS globales ──────────────────────────────────────────────── */
+:root {
+  --color-primary: #2563eb;
+  --color-secondary: #16a34a;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --nav-height: 64px;
+  --bottom-nav-height: 70px;
+}
+
+/* ─── Reset y base ────────────────────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent; /* Quita el flash azul en móvil */
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Modo oscuro */
+body.dark {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+/* ─── Scrollbar personalizada ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ─── Clases utilitarias personalizadas ───────────────────────────────────── */
+@layer components {
+
+  /* Contenedor principal de páginas */
+  .page-container {
+    @apply max-w-lg mx-auto min-h-screen pb-24 pt-4 px-4;
+  }
+
+  /* Tarjeta moderna */
+  .card {
+    @apply bg-white rounded-2xl shadow-card p-4 border border-gray-100;
+  }
+  .dark .card {
+    @apply bg-dark-800 border-gray-700;
+  }
+
+  /* Botón primario */
+  .btn-primary {
+    @apply w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800
+           text-white font-semibold py-3.5 px-6 rounded-xl
+           transition-all duration-200 shadow-button
+           flex items-center justify-center gap-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Botón secundario */
+  .btn-secondary {
+    @apply w-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300
+           text-gray-700 font-semibold py-3.5 px-6 rounded-xl
+           transition-all duration-200
+           flex items-center justify-center gap-2;
+  }
+
+  /* Botón de peligro */
+  .btn-danger {
+    @apply w-full bg-danger-500 hover:bg-danger-600
+           text-white font-semibold py-3.5 px-6 rounded-xl
+           transition-all duration-200
+           flex items-center justify-center gap-2;
+  }
+
+  /* Input de formulario */
+  .input-field {
+    @apply w-full bg-gray-50 border border-gray-200 rounded-xl
+           px-4 py-3.5 text-gray-800 placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+           transition-all duration-200;
+  }
+  .dark .input-field {
+    @apply bg-dark-800 border-gray-600 text-gray-100 placeholder-gray-500;
+  }
+
+  /* Label de formulario */
+  .input-label {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+  }
+  .dark .input-label {
+    @apply text-gray-300;
+  }
+
+  /* Badge de estado */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+  .badge-pending  { @apply bg-yellow-100 text-yellow-700; }
+  .badge-verified { @apply bg-blue-100 text-blue-700; }
+  .badge-resolved { @apply bg-green-100 text-green-700; }
+  .badge-rejected { @apply bg-red-100 text-red-700; }
+  .badge-inProgress { @apply bg-purple-100 text-purple-700; }
+
+  /* Gradiente del header */
+  .gradient-header {
+    @apply bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded-xl;
+  }
+  .dark .skeleton {
+    @apply bg-gray-700;
+  }
+}
+
+/* ─── Estilos para el mapa (Leaflet) ─────────────────────────────────────── */
+.leaflet-container {
+  border-radius: 1rem;
+  z-index: 1;
+}
+
+/* ─── Animación de entrada de página ─────────────────────────────────────── */
+.page-enter {
+  animation: slideUp 0.3s ease-out;
+}
