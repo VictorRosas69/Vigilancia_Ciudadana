@@ -62,7 +62,22 @@ if (process.env.NODE_ENV === 'development') {
 // Si alguien hace GET /uploads/imagen.jpg, la sirve desde la carpeta uploads/
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// ─── 6. Ruta de verificación (Health Check) ──────────────────────────────────
+// ─── 6. Ruta raíz ────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: '🏛️ Vigilancia Ciudadana API - Operacional',
+        version: '1.0.0',
+        endpoints: {
+            health:   '/api/health',
+            auth:     '/api/auth',
+            reports:  '/api/reports',
+            comments: '/api/comments'
+        }
+    });
+});
+
+// ─── 7. Ruta de verificación (Health Check) ──────────────────────────────────
 // Sirve para saber si el servidor está corriendo correctamente
 app.get('/api/health', (req, res) => {
     res.status(200).json({
@@ -75,31 +90,13 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ─── 7. Rutas de la API ───────────────────────────────────────────────────────
+// ─── 8. Rutas de la API ───────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/comments', commentRoutes);
 
-// ─── 8. Manejo de errores (SIEMPRE AL FINAL) ─────────────────────────────────
+// ─── 9. Manejo de errores (SIEMPRE AL FINAL) ─────────────────────────────────
 app.use(notFound);    // Captura rutas que no existen → 404
 app.use(errorHandler); // Captura todos los errores → respuesta JSON uniforme
 
 module.exports = app;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
