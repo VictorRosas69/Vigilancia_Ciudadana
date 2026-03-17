@@ -27,7 +27,10 @@
 
 html {
   scroll-behavior: smooth;
-  -webkit-tap-highlight-color: transparent; /* Quita el flash azul en móvil */
+  -webkit-tap-highlight-color: transparent;
+  height: 100%;
+  /* Fix para mobile browsers con barra de dirección dinámica */
+  height: -webkit-fill-available;
 }
 
 body {
@@ -35,7 +38,11 @@ body {
   background-color: #f8fafc;
   color: #1e293b;
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height — fix barra Safari/Chrome mobile */
+  min-height: -webkit-fill-available;
   overflow-x: hidden;
+  /* Previene rebote en iOS */
+  overscroll-behavior: none;
 }
 
 /* Modo oscuro */
@@ -149,7 +156,43 @@ body.dark {
   z-index: 1;
 }
 
+/* ─── Safe area utilities (iOS notch / Android cutout) ──────────────────── */
+@layer utilities {
+  /* Padding top que respeta el notch/dynamic island */
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top), 16px);
+  }
+  .pt-safe-header {
+    padding-top: max(env(safe-area-inset-top) + 12px, 48px);
+  }
+  /* Padding bottom que respeta el indicador home de iPhone */
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  }
+  /* Para elementos fixed en el bottom */
+  .bottom-safe {
+    bottom: env(safe-area-inset-bottom);
+  }
+  /* Scroll sin rebote */
+  .scroll-smooth-mobile {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
 /* ─── Animación de entrada de página ─────────────────────────────────────── */
 .page-enter {
   animation: slideUp 0.3s ease-out;
 }
+
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ─── Ocultar scrollbar en filtros pill ──────────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Eliminar tap highlight en iOS ─────────────────────────────────────── */
+button, a { -webkit-tap-highlight-color: transparent; }

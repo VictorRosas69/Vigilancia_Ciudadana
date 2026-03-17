@@ -1,61 +1,125 @@
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { formatDistanceToNow, subMonths, format, isSameMonth } from 'date-fns';
+import { es } from 'date-fns/locale';
 import reportService from '../services/reportService';
 
-const WORK_TYPE_LABELS = {
-  road: '🛣️ Vía', sidewalk: '🚶 Andén', park: '🌳 Parque',
-  building: '🏢 Edificio', drainage: '💧 Drenaje', lighting: '💡 Alumbrado',
-  bridge: '🌉 Puente', water: '🚰 Acueducto', other: '🔧 Otro',
-};
+// ── Configuración ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  pending:    { label: 'Pendientes',   color: '#f59e0b', bg: 'bg-yellow-50', text: 'text-yellow-700' },
-  verified:   { label: 'Verificados',  color: '#3b82f6', bg: 'bg-blue-50',   text: 'text-blue-700' },
-  inProgress: { label: 'En progreso',  color: '#8b5cf6', bg: 'bg-purple-50', text: 'text-purple-700' },
-  resolved:   { label: 'Resueltos',    color: '#22c55e', bg: 'bg-green-50',  text: 'text-green-700' },
-  rejected:   { label: 'Rechazados',   color: '#ef4444', bg: 'bg-red-50',    text: 'text-red-700' },
+  pending:    { label: 'Pendiente',   color: '#f59e0b', dot: 'bg-orange-400' },
+  verified:   { label: 'Verificado',  color: '#06b6d4', dot: 'bg-cyan-500' },
+  inProgress: { label: 'En progreso', color: '#3b82f6', dot: 'bg-blue-500' },
+  resolved:   { label: 'Resuelto',    color: '#22c55e', dot: 'bg-green-500' },
+  rejected:   { label: 'Rechazado',   color: '#ef4444', dot: 'bg-red-500' },
 };
+
+const WORK_TYPE_LABELS = {
+  road:     { icon: '🛣️', label: 'Vía' },
+  lighting: { icon: '💡', label: 'Alumbrado' },
+  sidewalk: { icon: '🚶', label: 'Andén' },
+  drainage: { icon: '🔧', label: 'Tubería' },
+  park:     { icon: '🌳', label: 'Parque' },
+  bridge:   { icon: '🚉', label: 'Puente' },
+  building: { icon: '🏢', label: 'Edificio' },
+  water:    { icon: '🚰', label: 'Acueducto' },
+  other:    { icon: '⚙️', label: 'Otro' },
+};
+
+// ── Donut SVG ─────────────────────────────────────────────────────────────────
+
+const DonutChart = ({ segments, size = 120 }) => {
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = (size / 2) - 14;
+  const circumference = 2 * Math.PI * r;
+  const total = segments.reduce((s, seg) => s + seg.value, 0);
+
+  const GAP = total > 1 ? 2 : 0;
+  let offset = 0;
+  const arcs = segments.map((seg) => {
+    const dash = total > 0 ? Math.max(0, (seg.value / total) * circumference - GAP) : 0;
+    const arc = { ...seg, dash, offset: circumference - offset };
+    offset += dash + GAP;
+    return arc;
+  });
+
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+      {total === 0 ? (
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e5e7eb" strokeWidth="18" />
+      ) : (
+        arcs.map((arc, i) => (
+          <circle
+            key={i}
+            cx={cx} cy={cy} r={r}
+            fill="none"
+            stroke={arc.color}
+            strokeWidth="18"
+            strokeDasharray={`${arc.dash} ${circumference}`}
+            strokeDashoffset={arc.offset}
+            strokeLinecap="butt"
+          />
+        ))
+      )}
+      {/* Hole */}
+      <circle cx={cx} cy={cy} r={r - 14} fill="white" />
+    </svg>
+  );
+};
+
+// ── Página ────────────────────────────────────────────────────────────────────
 
 const StatsPage = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['stats'],
-    queryFn: () => reportService.getAll({ limit: 100 }),
+    queryFn: () => reportService.getAll({ limit: 200 }),
   });
 
   const reports = data?.reports || [];
   const total = reports.length;
+  const resolved = reports.filter(r => r.status === 'resolved').length;
+  const inProgress = reports.filter(r => r.status === 'inProgress').length;
+  const pending = reports.filter(r => r.status === 'pending').length;
 
-  // Estadísticas por estado
-  const byStatus = Object.keys(STATUS_CONFIG).map(status => ({
-    status,
-    count: reports.filter(r => r.status === status).length,
-    ...STATUS_CONFIG[status],
-  }));
+  // Por estado (para donut)
+  const statusSegments = Object.entries(STATUS_CONFIG).map(([key, cfg]) => ({
+    label: cfg.label,
+    color: cfg.color,
+    dot: cfg.dot,
+    value: reports.filter(r => r.status === key).length,
+  })).filter(s => s.value > 0);
 
-  // Estadísticas por tipo de obra
-  const byType = Object.entries(WORK_TYPE_LABELS).map(([type, label]) => ({
-    type,
-    label,
+  // Por tipo de obra
+  const byType = Object.entries(WORK_TYPE_LABELS).map(([type, cfg]) => ({
+    ...cfg,
     count: reports.filter(r => r.workType === type).length,
   })).filter(t => t.count > 0).sort((a, b) => b.count - a.count);
 
-  // Estadísticas por prioridad
-  const byPriority = [
-    { label: '🔴 Crítica',  value: 'critical', color: 'bg-red-500' },
-    { label: '🟠 Alta',     value: 'high',     color: 'bg-orange-500' },
-    { label: '🟡 Media',    value: 'medium',   color: 'bg-yellow-500' },
-    { label: '🟢 Baja',     value: 'low',      color: 'bg-green-500' },
-  ].map(p => ({
-    ...p,
-    count: reports.filter(r => r.priority === p.value).length,
-  }));
+  const maxType = byType[0]?.count || 1;
 
-  // Tasa de resolución
-  const resolved = reports.filter(r => r.status === 'resolved').length;
-  const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+  // Últimos 6 meses
+  const now = new Date();
+  const months = Array.from({ length: 6 }, (_, i) => subMonths(now, 5 - i));
+  const monthlyData = months.map(m => ({
+    label: format(m, 'MMM', { locale: es }),
+    count: reports.filter(r => isSameMonth(new Date(r.createdAt), m)).length,
+    isCurrent: isSameMonth(m, now),
+  }));
+  const maxMonth = Math.max(...monthlyData.map(m => m.count), 1);
+
+  const updatedAgo = formatDistanceToNow(new Date(), { addSuffix: false, locale: es });
+  const city = reports[0]?.location?.city || 'tu ciudad';
+
+  const STAT_CARDS = [
+    { icon: '📋', label: 'Total Reportes', value: total,      border: 'border-l-blue-500',   iconBg: 'bg-blue-50' },
+    { icon: '✅', label: 'Resueltos',       value: resolved,   border: 'border-l-green-500',  iconBg: 'bg-green-50' },
+    { icon: '⚙️', label: 'En curso',        value: inProgress, border: 'border-l-orange-400', iconBg: 'bg-orange-50' },
+    { icon: '⏳', label: 'Pendientes',      value: pending,    border: 'border-l-orange-400', iconBg: 'bg-orange-50' },
+  ];
 
   if (isLoading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
     </div>
   );
@@ -63,140 +127,108 @@ const StatsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
 
-      {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-12 pb-8">
-        <h1 className="text-white text-xl font-bold">📊 Estadísticas</h1>
-        <p className="text-blue-200 text-sm mt-1">Estado general de la ciudad</p>
-
-        {/* Tasa de resolución */}
-        <div className="mt-4 bg-white/10 rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-white font-semibold">Tasa de resolución</p>
-            <p className="text-white font-bold text-xl">{resolutionRate}%</p>
-          </div>
-          <div className="w-full bg-white/20 rounded-full h-3">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: resolutionRate + '%' }}
-              transition={{ duration: 1, ease: 'easeOut' }}
-              className="bg-green-400 h-3 rounded-full"
-            />
-          </div>
-          <p className="text-blue-200 text-xs mt-1">{resolved} de {total} reportes resueltos</p>
-        </div>
+      {/* ── Header ── */}
+      <div className="bg-white px-5 pt-12 pb-5">
+        <h1 className="text-2xl font-bold text-gray-900">📊 Estadísticas</h1>
+        <p className="text-gray-400 text-sm mt-0.5">{city} · Actualizado hace {updatedAgo}</p>
       </div>
 
-      <div className="px-4 py-4 flex flex-col gap-4">
+      <div className="px-5 py-4 flex flex-col gap-4">
 
-        {/* Total general */}
+        {/* ── 4 stat cards ── */}
         <div className="grid grid-cols-2 gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl p-4 border border-gray-100 text-center"
-          >
-            <p className="text-4xl font-bold text-blue-600">{total}</p>
-            <p className="text-gray-500 text-sm mt-1">Total reportes</p>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white rounded-2xl p-4 border border-gray-100 text-center"
-          >
-            <p className="text-4xl font-bold text-green-600">{resolved}</p>
-            <p className="text-gray-500 text-sm mt-1">Resueltos</p>
-          </motion.div>
+          {STAT_CARDS.map((card, i) => (
+            <motion.div
+              key={card.label}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.07 }}
+              className={`bg-white rounded-2xl p-4 border border-gray-100 border-l-4 ${card.border} shadow-sm`}
+            >
+              <div className={`w-10 h-10 ${card.iconBg} rounded-xl flex items-center justify-center text-xl mb-3`}>
+                {card.icon}
+              </div>
+              <p className="text-3xl font-bold text-gray-900">{card.value}</p>
+              <p className="text-sm text-gray-500 mt-0.5">{card.label}</p>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Por estado */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-50">
-            <h2 className="font-bold text-gray-800">📋 Por estado</h2>
-          </div>
-          <div className="p-4 flex flex-col gap-3">
-            {byStatus.map((item, index) => (
-              <motion.div
-                key={item.status}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`text-sm font-medium ${item.text}`}>{item.label}</span>
-                  <span className="text-sm font-bold text-gray-700">{item.count}</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: total > 0 ? (item.count / total * 100) + '%' : '0%' }}
-                    transition={{ duration: 0.8, delay: index * 0.1 }}
-                    className="h-2 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
-                </div>
-              </motion.div>
+        {/* ── Reportes por mes ── */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100">
+          <h2 className="font-bold text-gray-900 mb-5 flex items-center gap-2">
+            <span>📝</span> Reportes por mes
+          </h2>
+          <div className="flex items-end justify-between gap-2 h-28">
+            {monthlyData.map((m, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
+                <span className="text-xs text-gray-500 font-medium">{m.count > 0 ? m.count : ''}</span>
+                <motion.div
+                  initial={{ height: 0 }}
+                  animate={{ height: maxMonth > 0 ? `${(m.count / maxMonth) * 80}px` : '4px' }}
+                  transition={{ duration: 0.7, delay: i * 0.08, ease: 'easeOut' }}
+                  className={`w-full rounded-t-lg min-h-[4px] ${m.isCurrent ? 'bg-blue-600' : 'bg-blue-200'}`}
+                />
+                <span className="text-xs text-gray-400 capitalize">{m.label}</span>
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Por tipo de obra */}
-        {byType.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-50">
-              <h2 className="font-bold text-gray-800">🏗️ Por tipo de obra</h2>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {byType.map((item, index) => (
-                <motion.div
-                  key={item.type}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="px-4 py-3 flex items-center justify-between"
-                >
-                  <span className="text-sm text-gray-700">{item.label}</span>
+        {/* ── Por estado (donut) ── */}
+        <div className="bg-white rounded-2xl p-5 border border-gray-100">
+          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span>🧡</span> Por estado
+          </h2>
+          <div className="flex items-center gap-6">
+            <DonutChart segments={statusSegments} size={120} />
+            <div className="flex flex-col gap-2.5 flex-1">
+              {statusSegments.map((s, i) => (
+                <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-100 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full"
-                        style={{ width: total > 0 ? (item.count / total * 100) + '%' : '0%' }}
-                      />
-                    </div>
-                    <span className="text-sm font-bold text-gray-700 w-6 text-right">{item.count}</span>
+                    <span className={`w-2.5 h-2.5 rounded-full ${s.dot}`} />
+                    <span className="text-sm text-gray-700">{s.label}</span>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Por tipo de obra ── */}
+        {byType.length > 0 && (
+          <div className="bg-white rounded-2xl p-5 border border-gray-100">
+            <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <span>🚧</span> Por tipo de obra
+            </h2>
+            <div className="flex flex-col gap-4">
+              {byType.map((item, i) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm text-gray-800 flex items-center gap-1.5">
+                      <span>{item.icon}</span> {item.label}
+                    </span>
+                    <span className="text-sm font-bold text-gray-900">{item.count}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(item.count / maxType) * 100}%` }}
+                      transition={{ duration: 0.8, delay: i * 0.08, ease: 'easeOut' }}
+                      className="h-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600"
+                    />
                   </div>
                 </motion.div>
               ))}
             </div>
           </div>
         )}
-
-        {/* Por prioridad */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-50">
-            <h2 className="font-bold text-gray-800">⚡ Por prioridad</h2>
-          </div>
-          <div className="p-4 grid grid-cols-2 gap-3">
-            {byPriority.map((item, index) => (
-              <motion.div
-                key={item.value}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-gray-50 rounded-xl p-3 text-center"
-              >
-                <p className="text-2xl font-bold text-gray-800">{item.count}</p>
-                <p className="text-xs text-gray-500 mt-1">{item.label}</p>
-                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
-                  <div
-                    className={`${item.color} h-1.5 rounded-full`}
-                    style={{ width: total > 0 ? (item.count / total * 100) + '%' : '0%' }}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
 
       </div>
     </div>

@@ -13,7 +13,12 @@ import MapPage from './pages/MapPage';
 import ProfilePage from './pages/ProfilePage';
 import NotificationsPage from './pages/NotificationsPage';
 import AdminPage from './pages/AdminPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import StatsPage from './pages/StatsPage';
+import PetitionsPage from './pages/PetitionsPage';
+import NotFoundPage from './pages/NotFoundPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,13 +44,33 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Toaster position="top-center" />
+        <Toaster
+          position="top-center"
+          reverseOrder={false}
+          gutter={8}
+          toastOptions={{
+            duration: 3000,
+            style: {
+              borderRadius: '12px',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '14px',
+              maxWidth: '320px',
+            },
+            success: { duration: 2500 },
+            error:   { duration: 3500 },
+          }}
+        />
         <Routes>
           {/* Rutas públicas */}
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           
 
+
+          {/* Panel web de administración (sin layout móvil) */}
+          <Route path="/dashboard" element={<PrivateRoute><AdminDashboardPage /></PrivateRoute>} />
 
           {/* Rutas privadas con layout */}
           <Route path="/" element={<PrivateRoute><AppLayout /></PrivateRoute>}>
@@ -57,10 +82,11 @@ const App = () => {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="admin" element={<AdminPage />} />
             <Route path="stats" element={<StatsPage />} />
+            <Route path="petitions" element={<PetitionsPage />} />
           </Route>
 
-          {/* Redirigir rutas desconocidas */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Página 404 */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

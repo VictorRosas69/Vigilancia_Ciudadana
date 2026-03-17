@@ -1,6 +1,10 @@
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiX, HiLocationMarker, HiMap, HiFire } from 'react-icons/hi';
 import reportService from '../services/reportService';
 
 const PRIORITY_COLORS = {
@@ -10,50 +14,143 @@ const PRIORITY_COLORS = {
   critical: '#ef4444',
 };
 
-const PRIORITY_LABELS = {
-  low:      '🟢 Baja',
-  medium:   '🟡 Media',
-  high:     '🟠 Alta',
-  critical: '🔴 Crítica',
+const PRIORITY_WEIGHT = {
+  low:      0.3,
+  medium:   0.5,
+  high:     0.8,
+  critical: 1.0,
 };
 
-const STATUS_LABELS = {
-  pending:    'Pendiente',
-  verified:   'Verificado',
-  inProgress: 'En progreso',
-  resolved:   'Resuelto',
-  rejected:   'Rechazado',
+const PRIORITY_CONFIG = {
+  low:      { dot: 'bg-green-500',  label: 'Baja' },
+  medium:   { dot: 'bg-yellow-400', label: 'Media' },
+  high:     { dot: 'bg-orange-500', label: 'Alta' },
+  critical: { dot: 'bg-red-500',    label: 'Crítica' },
 };
+
+const STATUS_CONFIG = {
+  pending:    { dot: 'bg-orange-400', label: 'Pendiente' },
+  verified:   { dot: 'bg-blue-500',   label: 'Verificado' },
+  inProgress: { dot: 'bg-blue-500',   label: 'En progreso' },
+  resolved:   { dot: 'bg-green-500',  label: 'Resuelto' },
+  rejected:   { dot: 'bg-red-500',    label: 'Rechazado' },
+};
+
+const FILTERS = [
+  { label: 'Todos',   value: '' },
+  { label: 'Crítica', value: 'critical' },
+  { label: 'Alta',    value: 'high' },
+  { label: 'Media',   value: 'medium' },
+  { label: 'Baja',    value: 'low' },
+];
+
+const makePinIcon = (L, color) =>
+  L.divIcon({
+    html: `
+      <svg width="36" height="48" viewBox="0 0 36 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.25))">
+        <path d="M18 0C8.059 0 0 8.059 0 18C0 31.5 18 48 18 48C18 48 36 31.5 36 18C36 8.059 27.941 0 18 0Z" fill="${color}"/>
+        <circle cx="18" cy="18" r="7" fill="white"/>
+      </svg>`,
+    className: '',
+    iconSize: [36, 48],
+    iconAnchor: [18, 48],
+    popupAnchor: [0, -48],
+  });
 
 const MapPage = () => {
   const navigate = useNavigate();
   const [MapComponents, setMapComponents] = useState(null);
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [selected, setSelected] = useState(null);
+  const [viewMode, setViewMode] = useState('pins'); // 'pins' | 'heat'
 
   const { data } = useQuery({
     queryKey: ['reports-map'],
-    queryFn: () => reportService.getAll({ limit: 100 }),
+    queryFn: () => reportService.getAll({ limit: 200 }),
   });
 
-  const reports = data?.reports || [];
-  const reportsWithCoords = reports.filter(r =>
+  const allReports = data?.reports || [];
+  const reportsWithCoords = allReports.filter(r =>
     r.location?.coordinates &&
     r.location.coordinates[0] !== 0 &&
     r.location.coordinates[1] !== 0
   );
 
+  const filtered = priorityFilter
+    ? reportsWithCoords.filter(r => r.priority === priorityFilter)
+    : reportsWithCoords;
+
+  const heatPoints = filtered.map(r => [
+    r.location.coordinates[1],
+    r.location.coordinates[0],
+    PRIORITY_WEIGHT[r.priority] || 0.5,
+  ]);
+
   useEffect(() => {
     const loadMap = async () => {
       const L = await import('leaflet');
-      const { MapContainer, TileLayer, Marker, Popup } = await import('react-leaflet');
-
+      const { MapContainer, TileLayer, useMap } = await import('react-leaflet');
       delete L.default.Icon.Default.prototype._getIconUrl;
-      L.default.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-      });
 
-      setMapComponents({ MapContainer, TileLayer, Marker, Popup, L: L.default });
+      // ── HeatLayer ─────────────────────────────────────────────────────────
+      const HeatLayer = ({ points }) => {
+        const map = useMap();
+        useEffect(() => {
+          if (!points || points.length === 0) return;
+          let heatLayer = null;
+          const init = async () => {
+            await import('leaflet.heat');
+            const Lx = L.default;
+            if (!Lx.heatLayer) return;
+            heatLayer = Lx.heatLayer(points, {
+              radius: 40,
+              blur: 30,
+              maxZoom: 17,
+              max: 1.0,
+              gradient: { 0.2: '#4ade80', 0.4: '#facc15', 0.6: '#fb923c', 0.8: '#f87171', 1.0: '#dc2626' },
+            }).addTo(map);
+          };
+          init();
+          return () => { if (heatLayer) map.removeLayer(heatLayer); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [map, JSON.stringify(points)]);
+        return null;
+      };
+
+      // ── ClusterLayer (pines agrupados) ────────────────────────────────────
+      const ClusterLayer = ({ reports, onSelect }) => {
+        const map = useMap();
+        useEffect(() => {
+          let clusterGroup = null;
+          const init = async () => {
+            await import('leaflet.markercluster');
+            const Lx = L.default;
+            if (!Lx.markerClusterGroup) return;
+            clusterGroup = Lx.markerClusterGroup({
+              chunkedLoading: true,
+              maxClusterRadius: 60,
+              showCoverageOnHover: false,
+              spiderfyOnMaxZoom: true,
+            });
+            reports.forEach(report => {
+              const lat = report.location.coordinates[1];
+              const lng = report.location.coordinates[0];
+              const color = PRIORITY_COLORS[report.priority] || PRIORITY_COLORS.medium;
+              const icon = makePinIcon(Lx, color);
+              const marker = Lx.marker([lat, lng], { icon });
+              marker.on('click', () => onSelect(report));
+              clusterGroup.addLayer(marker);
+            });
+            map.addLayer(clusterGroup);
+          };
+          init();
+          return () => { if (clusterGroup) map.removeLayer(clusterGroup); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [map, JSON.stringify(reports.map(r => r._id))]);
+        return null;
+      };
+
+      setMapComponents({ MapContainer, TileLayer, L: L.default, HeatLayer, ClusterLayer });
     };
     loadMap();
   }, []);
@@ -62,32 +159,13 @@ const MapPage = () => {
     ? [reportsWithCoords[0].location.coordinates[1], reportsWithCoords[0].location.coordinates[0]]
     : [1.2136, -77.2811];
 
+  const cityName = reportsWithCoords[0]?.location?.city || 'tu ciudad';
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="fixed inset-0 pb-20">
 
-      {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-4 pt-12 pb-4">
-        <h1 className="text-white text-xl font-bold">🗺️ Mapa de Reportes</h1>
-        <p className="text-blue-200 text-sm mt-1">
-          {reportsWithCoords.length} reporte{reportsWithCoords.length !== 1 ? 's' : ''} con ubicación
-        </p>
-      </div>
-
-      {/* Leyenda de prioridades */}
-      <div className="px-4 py-3 bg-white border-b border-gray-100">
-        <p className="text-xs text-gray-500 font-medium mb-2">Color por prioridad:</p>
-        <div className="flex gap-4 overflow-x-auto">
-          {Object.entries(PRIORITY_LABELS).map(([key, label]) => (
-            <div key={key} className="flex items-center gap-1.5 flex-shrink-0">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PRIORITY_COLORS[key] }} />
-              <span className="text-xs text-gray-600">{label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Mapa */}
-      <div className="h-[calc(100vh-220px)]">
+      {/* ── Mapa full screen ── */}
+      <div className="absolute inset-0">
         {!MapComponents ? (
           <div className="h-full flex items-center justify-center bg-gray-100">
             <div className="flex flex-col items-center gap-3">
@@ -100,80 +178,181 @@ const MapPage = () => {
             center={center}
             zoom={13}
             style={{ height: '100%', width: '100%' }}
+            zoomControl={false}
           >
             <MapComponents.TileLayer
-              attribution='&copy; OpenStreetMap'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              subdomains="abcd"
+              maxZoom={19}
             />
-            {reportsWithCoords.map((report) => {
-              const lat = report.location.coordinates[1];
-              const lng = report.location.coordinates[0];
-              const color = PRIORITY_COLORS[report.priority] || PRIORITY_COLORS.medium;
 
-              const icon = MapComponents.L.divIcon({
-                html: `<div style="
-                  background:${color};
-                  width:32px;height:32px;
-                  border-radius:50% 50% 50% 0;
-                  transform:rotate(-45deg);
-                  border:3px solid white;
-                  box-shadow:0 2px 8px rgba(0,0,0,0.3);
-                "></div>`,
-                className: '',
-                iconSize: [32, 32],
-                iconAnchor: [16, 32],
-              });
+            {/* Pines con clustering */}
+            {viewMode === 'pins' && filtered.length > 0 && (
+              <MapComponents.ClusterLayer
+                reports={filtered}
+                onSelect={report => setSelected(report)}
+              />
+            )}
 
-              return (
-                <MapComponents.Marker key={report._id} position={[lat, lng]} icon={icon}>
-                  <MapComponents.Popup>
-                    <div style={{ minWidth: '200px' }}>
-                      {/* Prioridad y estado */}
-                      <div style={{ display: 'flex', gap: '6px', marginBottom: '6px' }}>
-                        <span style={{
-                          background: color, color: 'white',
-                          fontSize: '11px', padding: '2px 8px',
-                          borderRadius: '999px', fontWeight: '600'
-                        }}>
-                          {PRIORITY_LABELS[report.priority]}
-                        </span>
-                        <span style={{
-                          background: '#f3f4f6', color: '#374151',
-                          fontSize: '11px', padding: '2px 8px',
-                          borderRadius: '999px'
-                        }}>
-                          {STATUS_LABELS[report.status]}
-                        </span>
-                      </div>
-                      {/* Título */}
-                      <p style={{ fontWeight: 'bold', marginBottom: '4px', fontSize: '14px' }}>
-                        {report.title}
-                      </p>
-                      {/* Ubicación */}
-                      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px' }}>
-                        📍 {report.location?.address || report.location?.neighborhood || report.location?.city || 'Sin dirección'}
-                      </p>
-                      {/* Botón */}
-                      <button
-                        onClick={() => navigate('/reports/' + report._id)}
-                        style={{
-                          background: '#2563eb', color: 'white',
-                          border: 'none', padding: '8px 12px',
-                          borderRadius: '8px', cursor: 'pointer',
-                          fontSize: '12px', width: '100%',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Ver detalle →
-                      </button>
-                    </div>
-                  </MapComponents.Popup>
-                </MapComponents.Marker>
-              );
-            })}
+            {/* Heatmap */}
+            {viewMode === 'heat' && heatPoints.length > 0 && (
+              <MapComponents.HeatLayer points={heatPoints} />
+            )}
           </MapComponents.MapContainer>
         )}
       </div>
+
+      {/* ── Header + Filtros overlay ── */}
+      <div
+        className="absolute top-0 left-0 right-0 z-[1000] px-4 pointer-events-none flex flex-col gap-2"
+        style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
+      >
+        {/* Header compacto */}
+        <div
+          className="bg-white/95 backdrop-blur-xl rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3 pointer-events-auto"
+          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}
+        >
+          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            <HiLocationMarker className="text-white text-base" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-sm font-extrabold text-gray-900">Mapa de Reportes</h1>
+            <p className="text-gray-400 text-xs">
+              {filtered.length} reporte{filtered.length !== 1 ? 's' : ''} · {cityName}
+            </p>
+          </div>
+
+          {/* Toggle Pines / Calor */}
+          <div className="flex items-center bg-gray-100 rounded-xl p-0.5 flex-shrink-0">
+            <button
+              onClick={() => { setViewMode('pins'); setSelected(null); }}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'pins' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'
+              }`}
+            >
+              <HiMap className="text-sm" />
+              Pines
+            </button>
+            <button
+              onClick={() => { setViewMode('heat'); setSelected(null); }}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'heat' ? 'bg-white text-orange-500 shadow-sm' : 'text-gray-400'
+              }`}
+            >
+              <HiFire className="text-sm" />
+              Calor
+            </button>
+          </div>
+        </div>
+
+        {/* Filtros pills */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pointer-events-auto pb-1">
+          {FILTERS.map((f) => {
+            const cfg = f.value ? PRIORITY_CONFIG[f.value] : null;
+            const isActive = priorityFilter === f.value;
+            return (
+              <button
+                key={f.value}
+                onClick={() => setPriorityFilter(f.value)}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  isActive
+                    ? 'bg-white text-gray-900 shadow-md border border-gray-100'
+                    : 'bg-white/85 backdrop-blur-md text-gray-500 border border-white/60 shadow-sm'
+                }`}
+              >
+                {cfg && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />}
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Leyenda heatmap */}
+        {viewMode === 'heat' && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/95 backdrop-blur-xl rounded-xl px-3 py-2 shadow pointer-events-auto flex items-center gap-2"
+          >
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Densidad</span>
+            <div className="flex-1 h-2.5 rounded-full" style={{
+              background: 'linear-gradient(to right, #4ade80, #facc15, #fb923c, #f87171, #dc2626)'
+            }} />
+            <div className="flex items-center justify-between w-16">
+              <span className="text-[9px] text-gray-400 font-medium">Baja</span>
+              <span className="text-[9px] text-gray-400 font-medium">Alta</span>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* ── Bottom sheet al seleccionar un reporte (solo en modo pines) ── */}
+      <AnimatePresence>
+        {selected && viewMode === 'pins' && (
+          <motion.div
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            className="absolute bottom-24 left-0 right-0 z-[1001] px-4"
+          >
+            <div className="bg-white rounded-3xl p-5" style={{ boxShadow: '0 -4px 40px rgba(0,0,0,0.15)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  {STATUS_CONFIG[selected.status] && (
+                    <span className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${
+                      selected.status === 'resolved'   ? 'bg-green-50 text-green-700' :
+                      selected.status === 'inProgress' ? 'bg-violet-50 text-violet-700' :
+                      selected.status === 'rejected'   ? 'bg-red-50 text-red-700' :
+                                                         'bg-orange-50 text-orange-700'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${STATUS_CONFIG[selected.status].dot}`} />
+                      {STATUS_CONFIG[selected.status].label}
+                    </span>
+                  )}
+                  {PRIORITY_CONFIG[selected.priority] && (
+                    <span className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-gray-50 text-gray-600">
+                      <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_CONFIG[selected.priority].dot}`} />
+                      {PRIORITY_CONFIG[selected.priority].label}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center"
+                >
+                  <HiX className="text-gray-500 text-sm" />
+                </button>
+              </div>
+
+              <h3 className="text-base font-extrabold text-gray-900 leading-snug mb-3">
+                {selected.title}
+              </h3>
+
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 mb-4">
+                <HiLocationMarker className="text-blue-500 flex-shrink-0 text-base" />
+                <span className="text-xs text-gray-600 font-medium truncate">
+                  {selected.location?.address ||
+                    [selected.location?.neighborhood, selected.location?.city].filter(Boolean).join(', ') ||
+                    'Sin dirección'}
+                </span>
+              </div>
+
+              <button
+                onClick={() => navigate(`/reports/${selected._id}`)}
+                className="w-full text-white font-bold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)', boxShadow: '0 4px 16px rgba(37,99,235,0.35)' }}
+              >
+                Ver detalle
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
