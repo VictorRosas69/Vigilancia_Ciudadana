@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const Report = require('../models/Report');
+const { createNotification } = require('./notificationController');
 
 // ─── CREAR COMENTARIO ─────────────────────────────────────────────────────────
 const createComment = async (req, res, next) => {
@@ -28,6 +29,22 @@ const createComment = async (req, res, next) => {
     await comment.populate('author', 'name avatar');
 
     await Report.findByIdAndUpdate(reportId, { $inc: { commentsCount: 1 } });
+
+    // Notificar al autor del reporte si el comentador es diferente
+    if (report.author.toString() !== req.user.id) {
+      const preview = content.trim().length > 60
+        ? content.trim().substring(0, 60) + '...'
+        : content.trim();
+      createNotification({
+        recipient:    report.author,
+        type:         'comment',
+        title:        'Nuevo comentario en tu reporte',
+        message:      `${req.user.name} comentó: "${preview}"`,
+        reportId:     report._id,
+        fromUser:     req.user.id,
+        fromUserName: req.user.name,
+      });
+    }
 
     res.status(201).json({ success: true, comment });
   } catch (error) {

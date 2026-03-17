@@ -78,7 +78,21 @@ const moderatorOrAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, adminOnly, moderatorOrAdmin };
+// ─── protectSSE: Para Server-Sent Events (token en query param) ──────────────
+const protectSSE = async (req, res, next) => {
+  const token = req.query.token;
+  if (!token) return res.status(401).end();
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id).select('-password');
+    if (!req.user || !req.user.isActive) return res.status(401).end();
+    next();
+  } catch {
+    return res.status(401).end();
+  }
+};
+
+module.exports = { protect, adminOnly, moderatorOrAdmin, protectSSE };
 
 
 

@@ -8,6 +8,10 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const petitionRoutes = require('./routes/petitionRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const trackingRoutes = require('./routes/trackingRoutes');
 
 const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
 
@@ -24,6 +28,7 @@ app.use(cors({
     const allowedOrigins = [
       process.env.FRONTEND_URL,
       'http://localhost:5173',
+      'http://localhost:5174',
       'http://localhost:3000',
       'http://localhost',
       'capacitor://localhost',
@@ -32,7 +37,9 @@ app.use(cors({
       null,
     ];
 
-    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+    const isLocalNetwork = /^http:\/\/(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(origin);
+
+    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin) || isLocalNetwork) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: Origen no permitido → ${origin}`));
@@ -86,6 +93,10 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/petitions', petitionRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/tracking', trackingRoutes);
 
 // ─── 9. Errores ───────────────────────────────────────────────────────────────
 app.use(notFound);
