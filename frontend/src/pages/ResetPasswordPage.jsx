@@ -165,7 +165,7 @@ const ResetPasswordPage = () => {
                   value={form.email}
                   onChange={handleChange}
                   placeholder="tucorreo@ejemplo.com"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
               </div>
 
@@ -200,7 +200,7 @@ const ResetPasswordPage = () => {
                     value={form.newPassword}
                     onChange={handleChange}
                     placeholder="Mínimo 6 caracteres"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-14 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-14 pr-12 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   />
                   <button
                     type="button"
@@ -243,7 +243,7 @@ const ResetPasswordPage = () => {
                     value={form.confirmPassword}
                     onChange={handleChange}
                     placeholder="Repite la contraseña"
-                    className={`w-full bg-gray-50 border rounded-2xl pl-14 pr-12 py-3.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+                    className={`w-full bg-gray-50 border rounded-2xl pl-14 pr-12 py-3.5 text-base focus:outline-none focus:ring-2 transition-all ${
                       form.confirmPassword && form.newPassword !== form.confirmPassword
                         ? 'border-red-300 focus:ring-red-400'
                         : form.confirmPassword && form.newPassword === form.confirmPassword

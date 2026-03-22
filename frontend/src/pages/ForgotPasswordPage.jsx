@@ -96,7 +96,7 @@ const ForgotPasswordPage = () => {
                       onChange={e => setEmail(e.target.value)}
                       placeholder="tucorreo@ejemplo.com"
                       autoComplete="email"
-                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-14 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-14 pr-4 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                   </div>
                 </div>
