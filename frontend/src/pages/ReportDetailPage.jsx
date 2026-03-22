@@ -300,45 +300,44 @@ const ReportDetailPage = () => {
         {/* Action sheet opciones */}
         {menuOpen && (
           <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setMenuOpen(false)}>
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-black/50" />
             <motion.div
-              initial={{ y: 100, opacity: 0 }}
+              initial={{ y: 200, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative bg-white rounded-t-3xl px-4 pt-3 pb-10 max-w-lg mx-auto w-full"
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="relative bg-white rounded-t-3xl px-5 pt-4 max-w-lg mx-auto w-full"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 88px)' }}
               onClick={e => e.stopPropagation()}
             >
-              {/* Handle */}
-              <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+              <div className="w-10 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
 
-              <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest text-center mb-4">
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest text-center mb-5">
                 Opciones del reporte
               </p>
 
               <button
                 onClick={() => { setMenuOpen(false); navigate(`/reports/${id}/edit`); }}
-                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-blue-50 hover:bg-blue-100 transition-colors mb-3"
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-gray-50 active:bg-blue-50 transition-colors mb-3 border border-gray-100"
               >
-                <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
                   <HiPencil className="text-white text-lg" />
                 </div>
-                <div className="text-left">
+                <div className="text-left flex-1">
                   <p className="text-sm font-bold text-gray-900">Editar reporte</p>
-                  <p className="text-xs text-gray-400">Modifica título, descripción o ubicación</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Modifica título, descripción o ubicación</p>
                 </div>
               </button>
 
               <button
                 onClick={() => { setMenuOpen(false); setConfirmDelete(true); }}
-                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-red-50 hover:bg-red-100 transition-colors"
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-gray-50 active:bg-red-50 transition-colors border border-gray-100"
               >
-                <div className="w-10 h-10 bg-red-500 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <div className="w-11 h-11 bg-red-500 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-200">
                   <HiTrash className="text-white text-lg" />
                 </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold text-red-600">Eliminar reporte</p>
-                  <p className="text-xs text-red-400">Esta acción no se puede deshacer</p>
+                <div className="text-left flex-1">
+                  <p className="text-sm font-bold text-red-500">Eliminar reporte</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Esta acción no se puede deshacer</p>
                 </div>
               </button>
             </motion.div>
