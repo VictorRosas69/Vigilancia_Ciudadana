@@ -192,14 +192,12 @@ const HomePage = () => {
           </form>
         </div>
 
-        {/* Curva de transición al contenido */}
-        <div className="h-7 bg-gray-50/80 rounded-t-[32px]" />
       </div>
 
       {/* ══════════════════════════════════════════
-          FILTROS
+          FILTROS — carta blanca que sube sobre el header
       ══════════════════════════════════════════ */}
-      <div className="px-5 pb-3 flex gap-2.5 overflow-x-auto scrollbar-hide">
+      <div className="bg-gray-50/80 rounded-t-[28px] -mt-4 px-5 pb-3 pt-4 flex gap-2.5 overflow-x-auto scrollbar-hide">
         {FILTERS.map((f) => {
           const isActive = statusFilter === f.value;
           return (
