@@ -17,6 +17,9 @@ const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
 
 const app = express();
 
+// ─── Trust proxy (necesario en Render/Heroku para rate limiting) ──────────────
+app.set('trust proxy', 1);
+
 // ─── 1. Seguridad ────────────────────────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
