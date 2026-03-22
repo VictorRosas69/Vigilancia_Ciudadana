@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   HiMail, HiLocationMarker, HiPencil,
-  HiLogout, HiClipboardList, HiCheck, HiChevronRight, HiBell, HiCamera
+  HiLogout, HiClipboardList, HiCheck, HiChevronRight, HiBell, HiCamera, HiChatAlt
 } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import authService from '../services/authService';
@@ -404,6 +404,24 @@ const ProfilePage = () => {
 
         {/* ── Accesos rápidos ── */}
         <div className="flex flex-col gap-2.5">
+
+          {/* Mensajes */}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/messages')}
+            className="bg-white rounded-3xl px-5 py-4 flex items-center gap-3 w-full text-left"
+            style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}
+          >
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-xl"
+              style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}>
+              💬
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-bold text-gray-900">Mensajes</p>
+              <p className="text-xs text-gray-400 mt-0.5">Contacta al administrador</p>
+            </div>
+            <HiChevronRight className="text-gray-300 text-lg flex-shrink-0" />
+          </motion.button>
 
           {/* Notificaciones */}
           <motion.button
