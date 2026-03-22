@@ -1,6 +1,47 @@
-const { Resend } = require('resend');
+const https = require('https');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const SENDER_EMAIL  = process.env.GMAIL_USER || 'feliperosasburbano03@gmail.com';
+const SENDER_NAME   = 'Vigilancia Ciudadana';
+
+// ─── Enviar email via Brevo REST API ─────────────────────────────────────────
+const sendEmail = ({ to, subject, html }) => {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({
+      sender:      { name: SENDER_NAME, email: SENDER_EMAIL },
+      to:          [{ email: to }],
+      subject,
+      htmlContent: html,
+    });
+
+    const options = {
+      hostname: 'api.brevo.com',
+      path:     '/v3/smtp/email',
+      method:   'POST',
+      headers: {
+        'accept':       'application/json',
+        'content-type': 'application/json',
+        'api-key':      BREVO_API_KEY,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(JSON.parse(data));
+        } else {
+          reject(new Error(`Brevo error ${res.statusCode}: ${data}`));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+};
 
 // ─── Plantilla HTML base ──────────────────────────────────────────────────────
 const baseTemplate = (content) => `
@@ -15,21 +56,15 @@ const baseTemplate = (content) => `
     <tr><td align="center">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
 
-        <!-- Header -->
         <tr><td style="background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:20px 20px 0 0;padding:32px 32px 28px;text-align:center;">
-          <div style="width:56px;height:56px;background:rgba(255,255,255,0.2);border-radius:50%;display:inline-block;line-height:56px;margin-bottom:16px;">
-            <img src="https://img.icons8.com/ios-filled/28/ffffff/shield.png" width="28" height="28" style="vertical-align:middle;" alt="shield" />
-          </div>
           <h1 style="color:white;font-size:20px;font-weight:800;margin:0;">Vigilancia Ciudadana</h1>
           <p style="color:rgba(255,255,255,0.75);font-size:13px;margin:6px 0 0;">Reporta obras abandonadas en tu comunidad</p>
         </td></tr>
 
-        <!-- Contenido -->
         <tr><td style="background:white;padding:32px;">
           ${content}
         </td></tr>
 
-        <!-- Footer -->
         <tr><td style="background:#f9fafb;border-radius:0 0 20px 20px;padding:20px 32px;text-align:center;border-top:1px solid #e5e7eb;">
           <p style="color:#9ca3af;font-size:12px;margin:0;">
             Este es un mensaje automático, no respondas a este correo.<br/>
@@ -51,7 +86,6 @@ const sendPasswordResetEmail = async ({ to, userName, resetCode }) => {
       Hola <strong style="color:#111827;">${userName}</strong>, recibimos una solicitud para restablecer
       la contraseña de tu cuenta. Usa el código de abajo:
     </p>
-
     <div style="background:#eff6ff;border:2px dashed #93c5fd;border-radius:16px;padding:28px;text-align:center;margin-bottom:24px;">
       <p style="color:#3b82f6;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">
         Código de recuperación
@@ -63,21 +97,18 @@ const sendPasswordResetEmail = async ({ to, userName, resetCode }) => {
         Válido por <strong>15 minutos</strong>
       </p>
     </div>
-
     <div style="background:#fef3c7;border-left:4px solid #f59e0b;border-radius:8px;padding:12px 16px;margin-bottom:24px;">
       <p style="color:#92400e;font-size:13px;margin:0;">
         Si no solicitaste este código, ignora este correo. Tu contraseña no cambiará.
       </p>
     </div>
-
     <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center;">
       Ingresa este código en la app para crear tu nueva contraseña.
     </p>`;
 
-  await resend.emails.send({
-    from: 'Vigilancia Ciudadana <onboarding@resend.dev>',
+  await sendEmail({
     to,
-    subject: `${resetCode} es tu código de recuperación`,
+    subject: `${resetCode} es tu código de recuperación - Vigilancia Ciudadana`,
     html: baseTemplate(content),
   });
 };
@@ -99,8 +130,7 @@ const sendWelcomeEmail = async ({ to, userName }) => {
       Accede desde tu navegador o instala la app para empezar.
     </p>`;
 
-  await resend.emails.send({
-    from: 'Vigilancia Ciudadana <onboarding@resend.dev>',
+  await sendEmail({
     to,
     subject: '¡Bienvenido a Vigilancia Ciudadana!',
     html: baseTemplate(content),
