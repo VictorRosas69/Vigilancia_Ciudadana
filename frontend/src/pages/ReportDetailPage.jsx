@@ -43,11 +43,13 @@ const AVATAR_COLORS = [
 const getAvatarColor = (name = '') =>
   AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length];
 
-const Avatar = ({ name = '', size = 'md' }) => {
+const Avatar = ({ name = '', src = '', size = 'md' }) => {
   const sz = size === 'sm' ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-base';
   return (
-    <div className={`${sz} ${getAvatarColor(name)} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}>
-      {name[0]?.toUpperCase() || '?'}
+    <div className={`${sz} ${getAvatarColor(name)} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 overflow-hidden`}>
+      {src
+        ? <img src={src} alt={name} className="w-full h-full object-cover" />
+        : name[0]?.toUpperCase() || '?'}
     </div>
   );
 };
@@ -448,7 +450,7 @@ const ReportDetailPage = () => {
               onClick={() => { const aid = report.author?._id; if (aid) navigate(`/users/${aid}`); }}
               className="flex items-center gap-2.5 active:opacity-70 transition-opacity"
             >
-              <Avatar name={report.author?.name} />
+              <Avatar name={report.author?.name} src={report.author?.avatar?.url} />
               <div>
                 <p className="text-sm font-bold text-gray-900">{report.author?.name}</p>
                 <p className="text-xs text-gray-400">{timeAgo}</p>
@@ -525,7 +527,7 @@ const ReportDetailPage = () => {
               const commentTime = formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: es });
               return (
                 <div key={c._id} className="flex gap-3">
-                  <Avatar name={c.author?.name} size="sm" />
+                  <Avatar name={c.author?.name} src={c.author?.avatar?.url} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-sm font-bold text-gray-900">{c.author?.name}</span>
@@ -574,7 +576,7 @@ const ReportDetailPage = () => {
             {/* Avatar con borde */}
             <div className="flex-shrink-0 p-0.5 rounded-full"
               style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
-              <Avatar name={user?.name} size="sm" />
+              <Avatar name={user?.name} src={user?.avatar?.url} size="sm" />
             </div>
 
             {/* Campo de texto */}
