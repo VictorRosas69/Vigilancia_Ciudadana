@@ -161,7 +161,7 @@ const ReportCard = ({ report, onRefetch }) => {
           {/* Autor (clickable → perfil público) */}
           <button
             onClick={(e) => { e.stopPropagation(); if (report.author?._id) navigate(`/users/${report.author._id}`); }}
-            className="flex items-center gap-2.5 active:opacity-70 transition-opacity"
+            className="flex items-center gap-1.5 active:opacity-70 transition-opacity"
           >
             <div className={`w-8 h-8 bg-gradient-to-br ${avatarGradient} rounded-xl flex items-center justify-center text-white text-xs font-extrabold flex-shrink-0 shadow-sm overflow-hidden`}>
               {report.author?.avatar?.url ? (
