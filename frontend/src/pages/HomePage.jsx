@@ -220,7 +220,7 @@ const HomePage = () => {
       {/* ══════════════════════════════════════════
           LISTA DE REPORTES
       ══════════════════════════════════════════ */}
-      <div className="px-5 flex flex-col gap-4">
+      <div className="bg-gray-50/80 rounded-t-[28px] -mt-3 px-5 pt-5 flex flex-col gap-4">
 
         {/* Contador + botón limpiar */}
         {!isLoading && (
