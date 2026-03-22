@@ -556,42 +556,57 @@ const ReportDetailPage = () => {
 
       {/* ── Barra de comentarios fija ── */}
       <div
-        className="fixed left-0 right-0 z-40 max-w-lg mx-auto px-3 pb-3"
+        className="fixed left-0 right-0 z-40 max-w-lg mx-auto"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 72px)' }}
       >
-        <form
-          onSubmit={handleComment}
-          className="flex items-center gap-2 bg-white rounded-2xl px-3 py-2"
-          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)' }}
-        >
-          {/* Avatar */}
-          <div className="flex-shrink-0">
-            <Avatar name={user?.name} size="sm" />
-          </div>
+        {/* Fondo difuminado que cubre el contenido al hacer scroll */}
+        <div className="absolute inset-x-0 -top-6 bottom-0 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, rgba(248,250,252,1) 60%, transparent 100%)' }} />
 
-          {/* Input */}
-          <input
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Escribe un comentario..."
-            className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none py-1.5"
-          />
-
-          {/* Botón enviar */}
-          <motion.button
-            type="submit"
-            whileTap={{ scale: 0.88 }}
-            disabled={!comment.trim()}
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
+        <form onSubmit={handleComment} className="relative px-3 pb-3 pt-1">
+          <div
+            className="flex items-center gap-3 px-2 py-2 rounded-2xl"
             style={{
-              background: comment.trim()
-                ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-                : '#f1f5f9',
-              boxShadow: comment.trim() ? '0 4px 12px rgba(37,99,235,0.35)' : 'none',
+              background: 'white',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)',
             }}
           >
-            <HiPaperAirplane className={`text-base rotate-90 ${comment.trim() ? 'text-white' : 'text-gray-400'}`} />
-          </motion.button>
+            {/* Avatar con borde */}
+            <div className="flex-shrink-0 p-0.5 rounded-full"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+              <Avatar name={user?.name} size="sm" />
+            </div>
+
+            {/* Campo de texto */}
+            <div className="flex-1 flex items-center bg-gray-50 rounded-xl px-3.5 py-2.5"
+              style={{ border: '1px solid rgba(0,0,0,0.06)' }}>
+              <input
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Escribe un comentario..."
+                className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none"
+              />
+            </div>
+
+            {/* Botón enviar */}
+            <motion.button
+              type="submit"
+              whileTap={{ scale: 0.85 }}
+              disabled={!comment.trim()}
+              className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+              style={{
+                background: comment.trim()
+                  ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
+                  : '#f1f5f9',
+                boxShadow: comment.trim() ? '0 4px 14px rgba(37,99,235,0.4)' : 'none',
+                transform: comment.trim() ? 'scale(1)' : 'scale(0.95)',
+              }}
+            >
+              <HiPaperAirplane
+                className={`text-[17px] rotate-90 transition-colors ${comment.trim() ? 'text-white' : 'text-gray-300'}`}
+              />
+            </motion.button>
+          </div>
         </form>
       </div>
 
