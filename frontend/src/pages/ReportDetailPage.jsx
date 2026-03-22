@@ -182,11 +182,14 @@ const ReportDetailPage = () => {
     }
   };
 
-  const isOwner = user && report && (
-    String(user.id) === String(report.author?._id) ||
-    String(user._id) === String(report.author?._id) ||
+  const authorId = report
+    ? (typeof report.author === 'object' ? report.author?._id : report.author)
+    : null;
+  const isOwner = !!(user && authorId && (
+    String(user.id) === String(authorId) ||
+    String(user._id) === String(authorId) ||
     user.role === 'admin'
-  );
+  ));
 
   const handleDeleteReport = async () => {
     try {
