@@ -40,7 +40,7 @@ const StatusDropdown = ({ report, onStatusChange, loading }) => {
       <button
         onClick={() => setOpen(!open)}
         disabled={loading}
-        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border font-semibold transition-all ${current.color} ${current.border} ${loading ? 'opacity-50' : 'hover:opacity-80'}`}
+        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border font-semibold transition-all ${current.color} ${current.border} ${loading ? 'opacity-50' : ''}`}
       >
         {loading ? (
           <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -61,6 +61,7 @@ const StatusDropdown = ({ report, onStatusChange, loading }) => {
               exit={{ opacity: 0, y: -6, scale: 0.95 }}
               transition={{ duration: 0.12 }}
               className="absolute left-0 top-full mt-1 z-20 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden min-w-[150px]"
+              style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}
             >
               {STATUS_OPTIONS.map(opt => (
                 <button
@@ -95,7 +96,8 @@ const ReportCardAdmin = ({ report, onStatusChange, onDelete, updatingId }) => {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+      className="bg-white rounded-3xl overflow-hidden"
+      style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}
     >
       <div className="flex gap-0">
         {/* Imagen */}
@@ -113,7 +115,7 @@ const ReportCardAdmin = ({ report, onStatusChange, onDelete, updatingId }) => {
           </div>
         ) : (
           <div
-            className="w-24 flex-shrink-0 bg-gray-50 flex items-center justify-center text-3xl cursor-pointer"
+            className="w-24 flex-shrink-0 bg-blue-50 flex items-center justify-center text-3xl cursor-pointer"
             onClick={() => navigate('/reports/' + report._id)}
           >
             {WORK_ICONS[report.workType] || '📋'}
@@ -121,30 +123,25 @@ const ReportCardAdmin = ({ report, onStatusChange, onDelete, updatingId }) => {
         )}
 
         {/* Contenido */}
-        <div className="flex-1 p-3 min-w-0">
-          {/* Fila superior */}
+        <div className="flex-1 p-3.5 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1.5">
             <h3
-              className="text-sm font-bold text-gray-800 leading-tight cursor-pointer hover:text-purple-600 transition-colors line-clamp-1"
+              className="text-sm font-bold text-gray-800 leading-tight cursor-pointer line-clamp-1"
               onClick={() => navigate('/reports/' + report._id)}
             >
               {report.title}
             </h3>
-            <span className={`flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-md font-bold ${priority.bg} ${priority.text}`}>
+            <span className={`flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-lg font-bold ${priority.bg} ${priority.text}`}>
               {priority.label}
             </span>
           </div>
 
-          {/* Meta */}
           <div className="flex items-center gap-2 text-[11px] text-gray-400 mb-2">
             <span className="truncate">👤 {report.author?.name || 'Anónimo'}</span>
             <span>·</span>
             <span className="truncate">📍 {report.location?.neighborhood || report.location?.city || 'Sin ubicación'}</span>
           </div>
 
-          <p className="text-[11px] text-gray-500 line-clamp-1 mb-2">{report.description}</p>
-
-          {/* Acciones */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <StatusDropdown
               report={report}
@@ -154,15 +151,13 @@ const ReportCardAdmin = ({ report, onStatusChange, onDelete, updatingId }) => {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => navigate('/reports/' + report._id)}
-                className="p-1.5 bg-gray-50 text-gray-500 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                title="Ver detalle"
+                className="p-1.5 bg-gray-50 text-gray-500 rounded-xl transition-colors active:bg-blue-50 active:text-blue-600"
               >
                 <HiEye className="text-sm" />
               </button>
               <button
                 onClick={() => onDelete(report._id)}
-                className="p-1.5 bg-gray-50 text-gray-500 rounded-lg hover:bg-red-50 hover:text-red-500 transition-colors"
-                title="Eliminar"
+                className="p-1.5 bg-gray-50 text-gray-500 rounded-xl transition-colors active:bg-red-50 active:text-red-500"
               >
                 <HiTrash className="text-sm" />
               </button>
@@ -196,7 +191,6 @@ const AdminPage = () => {
   const reports = data?.reports || [];
   const totalInDB = data?.pagination?.total || 0;
 
-  // Stats reales del filtro actual
   const countByStatus = (status) => reports.filter(r => r.status === status).length;
 
   const handleStatusChange = async (reportId, newStatus) => {
@@ -247,85 +241,117 @@ const AdminPage = () => {
   };
 
   const STAT_CARDS = [
-    { label: 'Total',       value: totalInDB,              bg: 'bg-white/20',        icon: '📋' },
-    { label: 'Pendientes',  value: countByStatus('pending'),    bg: 'bg-amber-500/25',    icon: '⏳' },
-    { label: 'En progreso', value: countByStatus('inProgress'), bg: 'bg-violet-500/25',   icon: '⚙️' },
-    { label: 'Resueltos',   value: countByStatus('resolved'),   bg: 'bg-green-500/25',    icon: '✅' },
+    { label: 'Total',       value: totalInDB,                    color: 'rgba(255,255,255,0.15)', icon: '📋' },
+    { label: 'Pendientes',  value: countByStatus('pending'),     color: 'rgba(251,146,60,0.25)',  icon: '⏳' },
+    { label: 'En progreso', value: countByStatus('inProgress'),  color: 'rgba(167,139,250,0.25)', icon: '⚙️' },
+    { label: 'Resueltos',   value: countByStatus('resolved'),    color: 'rgba(52,211,153,0.25)',  icon: '✅' },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen pb-24" style={{ background: '#f8fafc' }}>
 
       {/* ── Header ── */}
-      <div className="bg-gradient-to-br from-purple-700 via-purple-600 to-indigo-700 px-4 pt-12 pb-5">
-        <div className="flex items-center gap-3 mb-5">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 bg-white/15 backdrop-blur rounded-xl text-white active:scale-95 transition-transform"
-          >
-            <HiArrowLeft className="text-lg" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-white text-xl font-extrabold">Panel Admin</h1>
-            <p className="text-purple-200 text-xs mt-0.5">Moderación · {totalInDB} reportes en total</p>
-          </div>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="p-2 bg-white/15 backdrop-blur rounded-xl text-white active:scale-95 transition-transform"
-            title="Panel web"
-          >
-            <HiDesktopComputer className="text-lg" />
-          </button>
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="p-2 bg-white/15 backdrop-blur rounded-xl text-white active:scale-95 transition-transform"
-          >
-            <HiRefresh className={`text-lg ${isFetching ? 'animate-spin' : ''}`} />
-          </button>
+      <div className="overflow-hidden" style={{
+        background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
+      }}>
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)' }} />
+          <div className="absolute top-8 -left-10 w-40 h-40 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)' }} />
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-2 mb-4">
-          {STAT_CARDS.map(s => (
-            <div key={s.label} className={`${s.bg} backdrop-blur rounded-2xl p-2.5 text-center border border-white/10`}>
-              <p className="text-lg mb-0.5">{s.icon}</p>
-              <p className="text-white text-base font-extrabold leading-none">{s.value}</p>
-              <p className="text-white/70 text-[10px] mt-0.5 font-medium leading-tight">{s.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Buscador */}
-        <div className="relative">
-          <HiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50 text-base" />
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por título o descripción..."
-            className="w-full bg-white/15 backdrop-blur border border-white/20 text-white placeholder-white/50 rounded-2xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-white/50 transition-colors"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+        <div className="relative px-4 pt-12 pb-5">
+          {/* Fila título */}
+          <div className="flex items-center gap-3 mb-5">
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={() => navigate(-1)}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
             >
-              <HiX className="text-base" />
-            </button>
-          )}
+              <HiArrowLeft className="text-white text-lg" />
+            </motion.button>
+            <div className="flex-1">
+              <h1 className="text-white text-xl font-extrabold tracking-tight">Panel Admin</h1>
+              <p className="text-blue-200/70 text-xs mt-0.5 font-medium">
+                Moderación · {totalInDB} reportes en total
+              </p>
+            </div>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={() => navigate('/dashboard')}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              <HiDesktopComputer className="text-white text-lg" />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              <HiRefresh className={`text-white text-lg ${isFetching ? 'animate-spin' : ''}`} />
+            </motion.button>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-2 mb-4">
+            {STAT_CARDS.map(s => (
+              <div key={s.label} className="rounded-2xl p-2.5 text-center"
+                style={{ background: s.color, border: '1px solid rgba(255,255,255,0.12)' }}>
+                <p className="text-lg mb-0.5">{s.icon}</p>
+                <p className="text-white text-base font-extrabold leading-none">{s.value}</p>
+                <p className="text-white/60 text-[10px] mt-0.5 font-semibold leading-tight">{s.label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Buscador */}
+          <div className="relative">
+            <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 text-base z-10" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por título o descripción..."
+              className="w-full rounded-2xl pl-11 pr-10 py-3 text-base focus:outline-none focus:border-white/50 transition-colors"
+              style={{
+                background: 'rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: 'white',
+              }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/60"
+              >
+                <HiX className="text-base" />
+              </button>
+            )}
+          </div>
         </div>
+
+        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
       </div>
 
       {/* ── Filtros de estado ── */}
-      <div className="bg-white border-b border-gray-100 px-4 py-2.5 flex gap-2 overflow-x-auto">
+      <div className="bg-white border-b border-gray-100 px-4 py-2.5 -mt-1 flex gap-2 overflow-x-auto scrollbar-hide">
         <button
           onClick={() => setFilterStatus('')}
-          className={`flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+          className={`flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
             filterStatus === ''
-              ? 'bg-purple-600 text-white shadow-sm shadow-purple-200'
-              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              ? 'text-white shadow-sm'
+              : 'bg-gray-100 text-gray-500'
           }`}
+          style={filterStatus === '' ? {
+            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            boxShadow: '0 4px 12px rgba(37,99,235,0.35)',
+          } : {}}
         >
           Todos
         </button>
@@ -333,11 +359,15 @@ const AdminPage = () => {
           <button
             key={s.value}
             onClick={() => setFilterStatus(s.value)}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               filterStatus === s.value
-                ? 'bg-purple-600 text-white shadow-sm shadow-purple-200'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                ? 'text-white shadow-sm'
+                : 'bg-gray-100 text-gray-500'
             }`}
+            style={filterStatus === s.value ? {
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              boxShadow: '0 4px 12px rgba(37,99,235,0.35)',
+            } : {}}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${filterStatus === s.value ? 'bg-white' : s.dot}`} />
             {s.label}
@@ -346,24 +376,26 @@ const AdminPage = () => {
       </div>
 
       {/* ── Lista ── */}
-      <div className="px-4 py-3 flex flex-col gap-2.5">
+      <div className="px-4 py-3 flex flex-col gap-3">
         {isLoading && (
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-2xl border border-gray-100 h-24 animate-pulse" />
+              <div key={i} className="bg-white rounded-3xl h-24 animate-pulse"
+                style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }} />
             ))}
           </div>
         )}
 
         {!isLoading && reports.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center text-3xl mb-3">
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl mb-4"
+              style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}>
               {filterStatus ? '🔍' : '✅'}
             </div>
-            <p className="text-gray-700 font-bold text-base">
+            <p className="text-gray-800 font-extrabold text-base">
               {filterStatus || search ? 'Sin resultados' : 'Sin reportes'}
             </p>
-            <p className="text-gray-400 text-sm mt-1 text-center px-8">
+            <p className="text-gray-400 text-sm mt-1.5 max-w-xs leading-relaxed">
               {filterStatus || search
                 ? 'Intenta con otro filtro o búsqueda'
                 : 'Aún no hay reportes en la plataforma'}
@@ -382,7 +414,7 @@ const AdminPage = () => {
         ))}
 
         {!isLoading && reports.length > 0 && (
-          <p className="text-center text-xs text-gray-400 py-2">
+          <p className="text-center text-xs text-gray-400 py-2 font-medium">
             Mostrando {reports.length} de {totalInDB} reportes
           </p>
         )}
@@ -408,7 +440,7 @@ const AdminPage = () => {
             >
               <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                <div className="w-11 h-11 bg-red-100 rounded-2xl flex items-center justify-center">
                   <HiExclamation className="text-red-500 text-xl" />
                 </div>
                 <div>
@@ -421,7 +453,7 @@ const AdminPage = () => {
                 onChange={e => setRejectReason(e.target.value)}
                 placeholder="Explica por qué se rechaza este reporte..."
                 rows={3}
-                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none mb-4"
+                className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-red-400 resize-none mb-4"
                 autoFocus
               />
               <div className="flex gap-2.5">
@@ -431,13 +463,15 @@ const AdminPage = () => {
                 >
                   Cancelar
                 </button>
-                <button
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleReject}
                   disabled={!!updatingId}
-                  className="flex-1 bg-red-500 text-white py-3.5 rounded-2xl font-bold text-sm shadow-md shadow-red-200 active:scale-98 transition-transform disabled:opacity-60"
+                  className="flex-1 bg-red-500 text-white py-3.5 rounded-2xl font-bold text-sm disabled:opacity-60"
+                  style={{ boxShadow: '0 4px 16px rgba(239,68,68,0.35)' }}
                 >
                   {updatingId ? 'Rechazando...' : 'Confirmar rechazo'}
-                </button>
+                </motion.button>
               </div>
             </motion.div>
           </motion.div>
