@@ -179,7 +179,7 @@ const HomePage = () => {
           </div>
 
           {/* Barra de búsqueda */}
-          <form onSubmit={handleSearch} className="relative">
+          <form onSubmit={handleSearch} className="relative mb-4">
             <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg z-10" />
             <input
               type="text"
@@ -190,34 +190,31 @@ const HomePage = () => {
               style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
             />
           </form>
+
+          {/* Filtros dentro del header */}
+          <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1">
+            {FILTERS.map((f) => {
+              const isActive = statusFilter === f.value;
+              return (
+                <motion.button
+                  key={f.value}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setStatusFilter(f.value)}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-200"
+                  style={isActive
+                    ? { background: 'rgba(255,255,255,0.95)', color: '#1e3a8a', boxShadow: '0 2px 12px rgba(0,0,0,0.2)' }
+                    : { background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.15)' }
+                  }
+                >
+                  {f.dot && (
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? f.dot : 'bg-white/50'}`} />
+                  )}
+                  {f.label}
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
-
-      </div>
-
-      {/* ══════════════════════════════════════════
-          FILTROS — carta blanca que sube sobre el header
-      ══════════════════════════════════════════ */}
-      <div className="bg-gray-50/80 rounded-t-[28px] -mt-4 px-5 pb-3 pt-4 flex gap-2.5 overflow-x-auto scrollbar-hide">
-        {FILTERS.map((f) => {
-          const isActive = statusFilter === f.value;
-          return (
-            <motion.button
-              key={f.value}
-              whileTap={{ scale: 0.92 }}
-              onClick={() => setStatusFilter(f.value)}
-              className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200"
-              style={isActive
-                ? { background: f.gradient, boxShadow: f.shadow, color: 'white' }
-                : { background: 'white', color: '#6b7280', border: '1px solid #f1f5f9', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }
-              }
-            >
-              {f.dot && (
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-white/70' : f.dot}`} />
-              )}
-              {f.label}
-            </motion.button>
-          );
-        })}
       </div>
 
       {/* ══════════════════════════════════════════
