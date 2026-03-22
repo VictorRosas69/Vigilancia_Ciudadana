@@ -143,11 +143,12 @@ const HomePage = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3.5">
               {/* Avatar */}
-              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center shadow-lg flex-shrink-0`}
+              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden`}
                 style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}>
-                <span className="text-white text-lg font-extrabold">
-                  {firstName[0]?.toUpperCase()}
-                </span>
+                {user?.avatar?.url
+                  ? <img src={user.avatar.url} alt={firstName} className="w-full h-full object-cover" />
+                  : <span className="text-white text-lg font-extrabold">{firstName[0]?.toUpperCase()}</span>
+                }
               </div>
               <div>
                 <p className="text-blue-200/70 text-xs font-medium">
