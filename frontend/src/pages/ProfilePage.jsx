@@ -167,7 +167,7 @@ const ProfilePage = () => {
                     value={form.city}
                     onChange={handleChange}
                     placeholder="Tu ciudad"
-                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex items-center gap-2.5">
@@ -179,7 +179,7 @@ const ProfilePage = () => {
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="Tu teléfono"
-                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex gap-2 mt-1">

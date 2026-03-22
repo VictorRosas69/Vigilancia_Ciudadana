@@ -113,7 +113,7 @@ const LoginPage = () => {
                 placeholder="correo@ejemplo.com"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-4 pl-14 text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-4 pl-14 text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
               />
             </div>
           </div>
@@ -133,7 +133,7 @@ const LoginPage = () => {
                 placeholder="••••••••"
                 value={form.password}
                 onChange={handleChange}
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-4 pl-14 pr-14 text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-4 pl-14 pr-14 text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
               />
               <button
                 type="button"
