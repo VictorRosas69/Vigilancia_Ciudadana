@@ -82,9 +82,9 @@ const MapSection = ({ coordinates }) => {
   }, []);
 
   return (
-    <div>
+    <div className="p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-gray-900 flex items-center gap-2">
+        <h2 className="font-extrabold text-gray-900 text-sm flex items-center gap-2">
           <span>📍</span> Ubicación en el mapa
         </h2>
         <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
@@ -203,13 +203,13 @@ const ReportDetailPage = () => {
   };
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
       <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
     </div>
   );
 
   if (!report) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
       <p className="text-gray-500">Reporte no encontrado</p>
     </div>
   );
@@ -237,7 +237,7 @@ const ReportDetailPage = () => {
                                      'bg-red-50 text-red-600';
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-48">
+    <div className="min-h-screen pb-48" style={{ background: '#f8fafc' }}>
 
       {/* ── Hero image ── */}
       <div className="relative">
@@ -248,13 +248,25 @@ const ReportDetailPage = () => {
               alt={report.title}
               className="w-full h-full object-cover"
             />
-            {/* Gradiente inferior para transición suave */}
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-50/60 via-transparent to-black/20" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20" />
           </div>
         ) : (
-          <div className="h-48 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full" />
-            <div className="absolute bottom-0 left-0 right-0 h-10 bg-gray-50 rounded-t-3xl" />
+          <div className="h-52 relative overflow-hidden" style={{
+            background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
+          }}>
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full"
+                style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)' }} />
+              <div className="absolute bottom-8 left-1/3 w-28 h-28 rounded-full"
+                style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)' }} />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
+                style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                {report.workType === 'road' ? '🛣️' : report.workType === 'park' ? '🌳' : report.workType === 'lighting' ? '💡' : '🏗️'}
+              </div>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-6 rounded-t-[24px]" style={{ background: '#f8fafc' }} />
           </div>
         )}
 
@@ -378,7 +390,7 @@ const ReportDetailPage = () => {
 
       {/* ── Thumbnails ── */}
       {report.images?.length > 1 && (
-        <div className="flex gap-2 px-5 py-3 bg-white border-b border-gray-50 overflow-x-auto">
+        <div className="flex gap-2 px-5 py-3 bg-white border-b border-gray-100 overflow-x-auto">
           {report.images.map((img, i) => (
             <button key={i} onClick={() => setActiveImage(i)} className="flex-shrink-0">
               <img
@@ -397,7 +409,8 @@ const ReportDetailPage = () => {
       <div className="px-4 py-5 flex flex-col gap-4">
 
         {/* Tarjeta info principal */}
-        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100/60">
+        <div className="bg-white rounded-3xl p-5"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
           {/* Tipo + Estado */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-gray-400 font-semibold bg-gray-50 px-3 py-1.5 rounded-xl">
@@ -459,7 +472,8 @@ const ReportDetailPage = () => {
         </div>
 
         {/* Tarjeta ubicación */}
-        <div className="bg-white rounded-3xl px-5 py-4 shadow-sm border border-gray-100/60 flex items-center gap-3">
+        <div className="bg-white rounded-3xl px-5 py-4 flex items-center gap-3"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
           <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0">
             <HiLocationMarker className="text-blue-500 text-xl" />
           </div>
@@ -480,13 +494,15 @@ const ReportDetailPage = () => {
 
         {/* Mapa */}
         {hasCoords && (
-          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100/60">
+          <div className="bg-white rounded-3xl overflow-hidden"
+            style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
             <MapSection coordinates={report.location.coordinates} />
           </div>
         )}
 
         {/* Comentarios */}
-        <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100/60">
+        <div className="bg-white rounded-3xl p-5"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
           <h2 className="font-extrabold text-gray-900 text-sm mb-4 flex items-center gap-2">
             <HiChatAlt className="text-blue-500 text-base" />
             Comentarios

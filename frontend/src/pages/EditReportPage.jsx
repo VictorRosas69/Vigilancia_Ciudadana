@@ -25,7 +25,7 @@ const PRIORITIES = [
   { value: 'critical', dot: 'bg-red-500',    border: 'border-red-500',    bg: 'bg-red-50',    text: 'text-red-700',   label: 'Crítica', desc: 'Inmediata' },
 ];
 
-const inputClass = 'w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm';
+const inputClass = 'w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base bg-gray-50/50';
 
 const EditReportPage = () => {
   const { id } = useParams();
@@ -48,7 +48,6 @@ const EditReportPage = () => {
     queryFn: () => reportService.getById(id),
   });
 
-  // Pre-llenar el formulario cuando lleguen los datos
   useEffect(() => {
     if (data?.report && !ready) {
       const r = data.report;
@@ -120,39 +119,53 @@ const EditReportPage = () => {
   const selectedType = WORK_TYPES.find(t => t.value === form.workType);
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
       <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-28">
+    <div className="min-h-screen pb-28" style={{ background: '#f8fafc' }}>
 
-      {/* Header */}
-      <div className="bg-white sticky top-0 z-20 px-5 pt-12 pb-4 flex items-center gap-4">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0"
-        >
-          <HiArrowLeft className="text-xl text-gray-700" />
-        </button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 leading-tight">Editar Reporte</h1>
-          <p className="text-gray-400 text-sm">Modifica los detalles del reporte</p>
+      {/* ── Header ── */}
+      <div className="sticky top-0 z-20 overflow-hidden" style={{
+        background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
+      }}>
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%)' }} />
         </div>
+
+        <div className="relative px-5 pt-12 pb-5 flex items-center gap-4">
+          <motion.button
+            whileTap={{ scale: 0.92 }}
+            type="button"
+            onClick={() => navigate(-1)}
+            className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
+          >
+            <HiArrowLeft className="text-white text-xl" />
+          </motion.button>
+          <div>
+            <h1 className="text-white text-xl font-extrabold tracking-tight">Editar Reporte</h1>
+            <p className="text-blue-200/70 text-sm mt-0.5 font-medium">Modifica los detalles</p>
+          </div>
+        </div>
+
+        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
       </div>
 
-      <form onSubmit={handleSubmit} className="px-5 py-4 flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="px-5 -mt-1 flex flex-col gap-4">
 
-        {/* Información */}
-        <div className="bg-white rounded-3xl p-5 border border-gray-100 flex flex-col gap-5">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+        {/* ── Información ── */}
+        <div className="bg-white rounded-3xl p-5 flex flex-col gap-5"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
             <span>📋</span> Información del reporte
-          </h2>
+          </p>
 
           <div>
-            <label className="text-sm font-medium text-gray-800 mb-2 block">
+            <label className="text-sm font-bold text-gray-700 mb-2 block">
               Título <span className="text-red-500">*</span>
             </label>
             <input
@@ -165,7 +178,7 @@ const EditReportPage = () => {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-800 mb-2 block">
+            <label className="text-sm font-bold text-gray-700 mb-2 block">
               Descripción <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -180,13 +193,13 @@ const EditReportPage = () => {
 
           {/* Tipo de obra */}
           <div ref={dropdownRef}>
-            <label className="text-sm font-medium text-gray-800 mb-2 block">
+            <label className="text-sm font-bold text-gray-700 mb-2 block">
               Tipo de obra <span className="text-red-500">*</span>
             </label>
             <button
               type="button"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-sm flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-base flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50"
             >
               <span className={selectedType ? 'text-gray-800' : 'text-gray-400'}>
                 {selectedType ? `${selectedType.icon} ${selectedType.label}` : 'Selecciona el tipo de obra'}
@@ -201,15 +214,16 @@ const EditReportPage = () => {
                   exit={{ opacity: 0, y: -8, scaleY: 0.95 }}
                   transition={{ duration: 0.15 }}
                   className="mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden origin-top"
+                  style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
                 >
                   {WORK_TYPES.map((t, i) => (
                     <button
                       key={t.value}
                       type="button"
                       onClick={() => { setForm(prev => ({ ...prev, workType: t.value })); setDropdownOpen(false); }}
-                      className={`w-full text-left px-4 py-3.5 text-sm flex items-center gap-3 hover:bg-gray-50 transition-colors ${
-                        form.workType === t.value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
-                      } ${i !== 0 ? 'border-t border-gray-100' : ''}`}
+                      className={`w-full text-left px-4 py-3.5 text-sm flex items-center gap-3 transition-colors ${
+                        form.workType === t.value ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-gray-50'
+                      } ${i !== 0 ? 'border-t border-gray-50' : ''}`}
                     >
                       <span className="text-xl">{t.icon}</span>
                       {t.label}
@@ -221,18 +235,20 @@ const EditReportPage = () => {
           </div>
         </div>
 
-        {/* Prioridad */}
-        <div className="bg-white rounded-3xl p-5 border border-gray-100">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+        {/* ── Prioridad ── */}
+        <div className="bg-white rounded-3xl p-5"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
             <span>⚡</span> Prioridad
-          </h2>
+          </p>
           <div className="grid grid-cols-2 gap-3">
             {PRIORITIES.map(p => {
               const isSelected = form.priority === p.value;
               return (
-                <button
+                <motion.button
                   key={p.value}
                   type="button"
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => setForm(prev => ({ ...prev, priority: p.value }))}
                   className={`p-4 rounded-2xl border-2 text-left transition-all ${
                     isSelected ? `${p.border} ${p.bg}` : 'border-gray-200 bg-white'
@@ -243,17 +259,18 @@ const EditReportPage = () => {
                     <span className={`text-base font-bold ${isSelected ? p.text : 'text-gray-800'}`}>{p.label}</span>
                   </div>
                   <p className={`text-xs ml-5 ${isSelected ? p.text : 'text-gray-400'}`}>{p.desc}</p>
-                </button>
+                </motion.button>
               );
             })}
           </div>
         </div>
 
-        {/* Ubicación */}
-        <div className="bg-white rounded-3xl p-5 border border-gray-100 flex flex-col gap-4">
-          <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+        {/* ── Ubicación ── */}
+        <div className="bg-white rounded-3xl p-5 flex flex-col gap-4"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
             <span>📍</span> Ubicación
-          </h2>
+          </p>
           <input
             name="city"
             value={form.location.city}
@@ -277,12 +294,16 @@ const EditReportPage = () => {
           />
         </div>
 
-        {/* Botón guardar */}
+        {/* ── Guardar ── */}
         <motion.button
           type="submit"
           disabled={loading}
           whileTap={{ scale: 0.97 }}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 text-base"
+          className="w-full text-white font-bold py-4 rounded-2xl disabled:opacity-50 flex items-center justify-center gap-2 text-base"
+          style={{
+            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            boxShadow: '0 6px 20px rgba(37,99,235,0.38)',
+          }}
         >
           {loading ? (
             <>

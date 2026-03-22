@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { HiArrowLeft, HiCheck, HiLockClosed, HiX, HiPencil } from 'react-icons/hi';
+import { HiCheck, HiLockClosed, HiX, HiPencil } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
 import petitionService from '../services/petitionService';
 import useAuthStore from '../store/authStore';
@@ -15,9 +15,8 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
   const hasDrawnRef = useRef(false);
   const [hasDrawn, setHasDrawn] = useState(false);
   const [cedula, setCedula] = useState('');
-  const [step, setStep] = useState('cedula'); // 'cedula' | 'canvas'
+  const [step, setStep] = useState('cedula');
 
-  // Helpers de posición — estables porque usan solo la ref
   const getPos = useCallback((e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -54,17 +53,12 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
     lastPos.current = null;
   }, []);
 
-  // Inicializar canvas Y registrar eventos touch con passive:false
-  // Solo cuando step cambia a 'canvas' (canvas aún no existe en step 'cedula')
   useEffect(() => {
     if (step !== 'canvas') return;
-
     let canvas;
     const t = setTimeout(() => {
       canvas = canvasRef.current;
       if (!canvas) return;
-
-      // Dimensiones nítidas en pantallas de alta densidad
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width * dpr;
@@ -75,20 +69,14 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
       ctx.lineWidth = 2.8;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-
-      // Eventos touch con passive:false para que preventDefault() funcione
-      // y no entre en conflicto con el scroll de la página
       canvas.addEventListener('touchstart',  startDrawFn, { passive: false });
       canvas.addEventListener('touchmove',   drawFn,      { passive: false });
       canvas.addEventListener('touchend',    stopDrawFn,  { passive: false });
       canvas.addEventListener('touchcancel', stopDrawFn,  { passive: false });
     }, 80);
-
-    // Parar dibujo si el dedo sale de la ventana
     const globalStop = () => { isDrawing.current = false; lastPos.current = null; };
     document.addEventListener('mouseup',  globalStop);
     document.addEventListener('touchend', globalStop);
-
     return () => {
       clearTimeout(t);
       document.removeEventListener('mouseup',  globalStop);
@@ -116,10 +104,7 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
 
   return (
     <div className="fixed inset-0 z-[200] flex flex-col justify-end">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Sheet */}
       <motion.div
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
@@ -129,16 +114,15 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
         style={{ maxHeight: '92dvh' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div className="w-10 h-1 bg-gray-300 rounded-full" />
         </div>
 
-        {/* Cabecera */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center">
-              <HiPencil className="text-indigo-600 text-base" />
+            <div className="w-9 h-9 rounded-2xl flex items-center justify-center"
+              style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}>
+              <HiPencil className="text-white text-base" />
             </div>
             <div>
               <p className="font-extrabold text-gray-800 text-sm">
@@ -155,7 +139,6 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
           </button>
         </div>
 
-        {/* ── Paso 1: Cédula ─────────────────────────────────────── */}
         {step === 'cedula' && (
           <>
             <div className="flex-1 flex flex-col justify-center px-6 py-6 bg-gray-50 gap-5 overflow-y-auto">
@@ -182,22 +165,21 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
                 <p className="text-xs text-gray-400 mt-2">Solo números, sin puntos ni espacios</p>
               </div>
             </div>
-
             <div
               className="flex-shrink-0 bg-white border-t border-gray-100 px-5 pt-3 flex gap-3"
               style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
             >
               <button
                 onClick={onClose}
-                className="w-24 py-3.5 rounded-2xl border-2 border-gray-200 text-gray-600 font-semibold text-sm active:scale-95 transition-transform"
+                className="w-24 py-3.5 rounded-2xl border-2 border-gray-200 text-gray-600 font-semibold text-sm"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => setStep('canvas')}
                 disabled={cedula.trim().length < 6}
-                className="flex-1 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm
-                           shadow-lg shadow-indigo-200/60 disabled:opacity-40 active:scale-95 transition-transform"
+                className="flex-1 py-3.5 rounded-2xl text-white font-bold text-sm disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', boxShadow: '0 4px 16px rgba(79,70,229,0.35)' }}
               >
                 Continuar →
               </button>
@@ -205,7 +187,6 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
           </>
         )}
 
-        {/* ── Paso 2: Canvas ─────────────────────────────────────── */}
         {step === 'canvas' && (
           <>
             <div className="px-5 py-2.5 bg-indigo-50 flex-shrink-0 flex items-center justify-between">
@@ -219,19 +200,15 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
                 Cambiar
               </button>
             </div>
-
             <div className="px-5 pt-4 pb-3 bg-gray-50 flex-shrink-0">
-              {/* Canvas con altura fija — no anidado en flex-1 para evitar height:0 */}
               <div
                 className="relative w-full bg-white rounded-2xl border-2 border-dashed border-indigo-200 shadow-inner overflow-hidden"
                 style={{ height: '200px' }}
               >
-                {/* Línea base */}
                 <div className="absolute bottom-10 left-6 right-6 border-b border-gray-200 pointer-events-none" />
                 <p className="absolute bottom-3 inset-x-0 text-center text-[10px] text-gray-300 pointer-events-none select-none">
                   Firma aquí
                 </p>
-
                 {!hasDrawn && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="flex flex-col items-center gap-2 opacity-25">
@@ -240,8 +217,6 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
                     </div>
                   </div>
                 )}
-
-                {/* Los eventos touch se registran en el useEffect con passive:false */}
                 <canvas
                   ref={canvasRef}
                   style={{ width: '100%', height: '100%', touchAction: 'none', display: 'block', cursor: 'crosshair' }}
@@ -255,7 +230,6 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
                 {hasDrawn ? '¡Listo! Confirma tu firma cuando estés satisfecho' : 'Usa tu dedo para dibujar la firma'}
               </p>
             </div>
-
             <div
               className="flex-shrink-0 bg-white border-t border-gray-100 px-5 pt-3 flex gap-3"
               style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
@@ -263,17 +237,15 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
               <button
                 onClick={clearCanvas}
                 disabled={!hasDrawn}
-                className="w-24 py-3.5 rounded-2xl border-2 border-gray-200 text-gray-600 font-semibold text-sm
-                           disabled:opacity-30 active:scale-95 transition-transform"
+                className="w-24 py-3.5 rounded-2xl border-2 border-gray-200 text-gray-600 font-semibold text-sm disabled:opacity-30"
               >
                 Limpiar
               </button>
               <button
                 onClick={confirm}
                 disabled={!hasDrawn || isLoading}
-                className="flex-1 py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm
-                           shadow-lg shadow-indigo-200/60 disabled:opacity-40 active:scale-95 transition-transform
-                           flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 rounded-2xl text-white font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', boxShadow: '0 4px 16px rgba(79,70,229,0.35)' }}
               >
                 {isLoading ? (
                   <>
@@ -307,72 +279,85 @@ const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+      className="bg-white rounded-3xl overflow-hidden"
+      style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}
     >
-      <div className="p-4">
-        <div className="flex items-start gap-2 mb-2">
+      <div className="p-5">
+        <div className="flex items-start gap-2 mb-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
                 petition.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
               }`}>
                 {petition.isOpen ? '✅ Abierta' : '🔒 Cerrada'}
               </span>
               {alreadySigned && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold flex items-center gap-1">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center gap-1">
                   <HiCheck className="text-xs" /> Firmada
                 </span>
               )}
             </div>
-            <h3 className="font-extrabold text-gray-800 text-base leading-snug">{petition.title}</h3>
-            <p className="text-xs text-gray-500 mt-1">Para: {petition.recipientTitle} · {petition.city}</p>
+            <h3 className="font-extrabold text-gray-900 text-base leading-snug">{petition.title}</h3>
+            <p className="text-xs text-gray-400 mt-1 font-medium">
+              Para: {petition.recipientTitle} · {petition.city}
+            </p>
           </div>
         </div>
 
         {/* Progreso */}
-        <div className="mb-3">
-          <div className="flex items-center justify-between mb-1">
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-extrabold text-indigo-600">{petition.signaturesCount} firmas</span>
-            <span className="text-xs text-gray-400">Meta: {petition.goal}</span>
+            <span className="text-xs text-gray-400 font-medium">Meta: {petition.goal}</span>
           </div>
           <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${pct}%` }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
-              className={`h-full rounded-full ${pct >= 100 ? 'bg-green-500' : 'bg-indigo-500'}`}
+              className="h-full rounded-full"
+              style={{
+                background: pct >= 100
+                  ? 'linear-gradient(to right, #22c55e, #16a34a)'
+                  : 'linear-gradient(to right, #6366f1, #8b5cf6)',
+              }}
             />
           </div>
-          <p className="text-xs text-gray-400 mt-1">{pct}% de la meta alcanzada</p>
+          <p className="text-xs text-gray-400 mt-1.5 font-medium">{pct}% de la meta alcanzada</p>
         </div>
 
         {/* Acciones */}
-        <div className="flex gap-2">
+        <div className="flex gap-2.5">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors"
+            className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 text-sm font-bold transition-colors active:bg-gray-50"
           >
             {expanded ? 'Ver menos' : 'Ver petición'}
           </button>
 
           {petition.isOpen && !alreadySigned && (
-            <button
+            <motion.button
+              whileTap={{ scale: 0.97 }}
               onClick={() => onSign(petition)}
-              className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200"
+              className="flex-1 py-3 rounded-2xl text-white text-sm font-bold"
+              style={{
+                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                boxShadow: '0 4px 14px rgba(79,70,229,0.35)',
+              }}
             >
               ✍️ Firmar
-            </button>
+            </motion.button>
           )}
           {petition.isOpen && alreadySigned && (
             <button
               onClick={() => onUnsign(petition._id)}
-              className="flex-1 py-2.5 rounded-xl bg-red-50 text-red-500 text-sm font-semibold border border-red-100 hover:bg-red-100 transition-colors"
+              className="flex-1 py-3 rounded-2xl bg-red-50 text-red-500 text-sm font-bold border border-red-100 active:bg-red-100 transition-colors"
             >
               Retirar firma
             </button>
           )}
           {!petition.isOpen && (
-            <div className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-400 text-sm font-semibold flex items-center justify-center gap-1.5">
+            <div className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-400 text-sm font-bold flex items-center justify-center gap-1.5">
               <HiLockClosed className="text-sm" /> Cerrada
             </div>
           )}
@@ -389,10 +374,10 @@ const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 border-t border-gray-50 pt-4 space-y-4">
+            <div className="px-5 pb-5 border-t border-gray-50 pt-4 space-y-4">
               <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Texto de la petición</p>
-                <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Texto de la petición</p>
+                <div className="bg-gray-50 rounded-2xl p-4">
                   {petition.body?.split('\n').filter(l => l.trim()).map((line, i) => (
                     <p key={i} className="text-sm text-gray-700 leading-relaxed mb-2 last:mb-0">{line}</p>
                   ))}
@@ -401,7 +386,7 @@ const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
 
               {petition.requests?.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Se solicita</p>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Se solicita</p>
                   <div className="space-y-2">
                     {petition.requests.map((req, i) => (
                       <div key={i} className="flex gap-2.5 items-start">
@@ -417,7 +402,7 @@ const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
 
               {petition.signatures?.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
                     Últimas firmas ({petition.signaturesCount})
                   </p>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -427,7 +412,7 @@ const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
                           <img
                             src={sig.signatureImage}
                             alt="firma"
-                            className="w-12 h-7 object-contain rounded border border-gray-100 bg-white flex-shrink-0"
+                            className="w-12 h-7 object-contain rounded-xl border border-gray-100 bg-white flex-shrink-0"
                           />
                         ) : (
                           <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs uppercase flex-shrink-0">
@@ -435,7 +420,7 @@ const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-700 truncate">{sig.name}</p>
+                          <p className="text-sm font-bold text-gray-700 truncate">{sig.name}</p>
                           <p className="text-xs text-gray-400">{sig.city || 'Sin ciudad'}</p>
                         </div>
                         <span className="text-xs text-gray-300 flex-shrink-0">
@@ -491,54 +476,66 @@ const PetitionsPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 pb-24">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 px-4 pt-12 pb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 bg-white/15 backdrop-blur rounded-xl text-white active:scale-95 transition-transform"
-            >
-              <HiArrowLeft className="text-lg" />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-white text-xl font-extrabold">Peticiones Ciudadanas</h1>
-              <p className="text-indigo-200 text-xs mt-0.5">
-                {openCount > 0
-                  ? `${openCount} petición(es) abiertas para firmar`
-                  : 'No hay peticiones activas'}
-              </p>
-            </div>
+      <div className="min-h-screen pb-24" style={{ background: '#f8fafc' }}>
+
+        {/* ── Header ── */}
+        <div className="relative overflow-hidden" style={{
+          background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
+        }}>
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full"
+              style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)' }} />
+            <div className="absolute top-8 -left-10 w-40 h-40 rounded-full"
+              style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)' }} />
           </div>
 
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/10">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">✍️</span>
+          <div className="relative px-5 pt-14 pb-6">
+            <h1 className="text-white text-2xl font-extrabold tracking-tight">Peticiones</h1>
+            <p className="text-blue-200/70 text-sm mt-0.5 font-medium">
+              {openCount > 0
+                ? `${openCount} petición${openCount !== 1 ? 'es' : ''} abierta${openCount !== 1 ? 's' : ''} para firmar`
+                : 'No hay peticiones activas'}
+            </p>
+
+            {/* Info card */}
+            <div className="mt-5 rounded-2xl p-4 flex items-start gap-3"
+              style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)' }}>
+              <span className="text-2xl flex-shrink-0">✍️</span>
               <div>
                 <p className="text-white font-bold text-sm">¿Cómo funciona?</p>
-                <p className="text-indigo-200 text-xs mt-1 leading-relaxed">
+                <p className="text-blue-200/70 text-xs mt-1 leading-relaxed">
                   Firma las peticiones para apoyar solicitudes formales a las autoridades municipales.
                   Tu nombre quedará registrado en el documento oficial enviado a la Alcaldía.
                 </p>
               </div>
             </div>
           </div>
+
+          <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
         </div>
 
-        {/* Lista */}
-        <div className="px-4 py-4 space-y-3">
+        {/* ── Lista ── */}
+        <div className="px-4 -mt-1 flex flex-col gap-3">
           {isLoading && [1, 2].map(i => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 h-40 animate-pulse" />
+            <div key={i} className="bg-white rounded-3xl h-40 animate-pulse"
+              style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }} />
           ))}
 
           {!isLoading && petitions.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-3xl mb-3">📜</div>
-              <p className="font-bold text-gray-700">No hay peticiones disponibles</p>
-              <p className="text-gray-400 text-sm mt-1 px-8">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center py-24 text-center"
+            >
+              <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-5 text-5xl"
+                style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}>
+                📜
+              </div>
+              <h3 className="text-base font-extrabold text-gray-800">No hay peticiones</h3>
+              <p className="text-gray-400 text-sm mt-1.5 leading-relaxed max-w-[200px]">
                 El administrador aún no ha creado peticiones ciudadanas
               </p>
-            </div>
+            </motion.div>
           )}
 
           {!isLoading && petitions.map(petition => (

@@ -32,7 +32,8 @@ const BottomNav = () => {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="mx-auto max-w-lg px-4 pb-2 pt-1">
-        <div className="bg-white/90 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-xl flex items-center justify-around px-2 py-1">
+        <div className="bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-2xl flex items-center justify-around px-2 py-1"
+          style={{ boxShadow: '0 -2px 24px rgba(0,0,0,0.06), 0 8px 32px rgba(0,0,0,0.12)' }}>
 
           {NAV_ITEMS.map((item) => {
             if (!item) {

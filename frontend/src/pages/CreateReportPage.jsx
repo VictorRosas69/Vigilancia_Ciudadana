@@ -32,7 +32,7 @@ const PRIORITIES = [
   { value: 'critical', dot: 'bg-red-500',    border: 'border-red-500',    bg: 'bg-red-50',    text: 'text-red-700',   label: 'Crítica', desc: 'Inmediata' },
 ];
 
-const inputClass = 'w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm';
+const inputClass = 'w-full border border-gray-200 bg-gray-50/60 rounded-2xl px-4 py-3.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all text-base';
 
 const CreateReportPage = () => {
   const navigate = useNavigate();
@@ -215,18 +215,25 @@ const CreateReportPage = () => {
     <div className="min-h-screen bg-gray-50 pb-28">
 
       {/* ── Header ── */}
-      <div className="bg-white sticky top-0 z-20 px-5 pt-12 pb-4 flex items-center gap-4">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center flex-shrink-0"
-        >
-          <HiArrowLeft className="text-xl text-gray-700" />
-        </button>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900 leading-tight">Nuevo Reporte</h1>
-          <p className="text-gray-400 text-sm">Completa todos los campos</p>
+      <div className="sticky top-0 z-20 overflow-hidden" style={{
+        background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
+      }}>
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)' }} />
         </div>
+        <div className="relative px-5 pt-12 pb-5 flex items-center gap-4">
+          <button type="button" onClick={() => navigate(-1)}
+            className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform"
+            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <HiArrowLeft className="text-white text-xl" />
+          </button>
+          <div>
+            <h1 className="text-white text-xl font-extrabold leading-tight tracking-tight">Nuevo Reporte</h1>
+            <p className="text-blue-200/70 text-sm font-medium">Completa todos los campos</p>
+          </div>
+        </div>
+        <div className="h-4 rounded-t-[24px] bg-gray-50" />
       </div>
 
       <form onSubmit={handleSubmit} className="px-5 py-4 flex flex-col gap-4">
