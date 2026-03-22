@@ -97,14 +97,14 @@ const ReportCardAdmin = ({ report, onStatusChange, onDelete, updatingId }) => {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-3xl overflow-hidden"
+      className="bg-white rounded-3xl"
       style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}
     >
       <div className="flex gap-0">
         {/* Imagen */}
         {report.images?.length > 0 ? (
           <div
-            className="w-24 flex-shrink-0 relative cursor-pointer"
+            className="w-24 flex-shrink-0 relative cursor-pointer rounded-l-3xl overflow-hidden"
             onClick={() => navigate('/reports/' + report._id)}
           >
             <img
@@ -116,7 +116,7 @@ const ReportCardAdmin = ({ report, onStatusChange, onDelete, updatingId }) => {
           </div>
         ) : (
           <div
-            className="w-24 flex-shrink-0 bg-blue-50 flex items-center justify-center text-3xl cursor-pointer"
+            className="w-24 flex-shrink-0 bg-blue-50 flex items-center justify-center text-3xl cursor-pointer rounded-l-3xl"
             onClick={() => navigate('/reports/' + report._id)}
           >
             {WORK_ICONS[report.workType] || '📋'}
