@@ -23,6 +23,7 @@ import EditReportPage from './pages/EditReportPage';
 import PublicProfilePage from './pages/PublicProfilePage';
 import MessagesPage from './pages/MessagesPage';
 import AdminMessagesPage from './pages/AdminMessagesPage';
+import OnboardingPage from './pages/OnboardingPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,7 +42,14 @@ const PrivateRoute = ({ children }) => {
 
 const PublicRoute = ({ children }) => {
   const token = useAuthStore((state) => state.token);
-  return !token ? children : <Navigate to="/" replace />;
+  if (token) return <Navigate to="/" replace />;
+  if (!localStorage.getItem('onboarding_done')) return <Navigate to="/onboarding" replace />;
+  return children;
+};
+
+const OnboardingRoute = ({ children }) => {
+  const done = localStorage.getItem('onboarding_done');
+  return !done ? children : <Navigate to="/login" replace />;
 };
 
 const App = () => {
@@ -65,6 +73,9 @@ const App = () => {
           }}
         />
         <Routes>
+          {/* Onboarding (solo primera vez) */}
+          <Route path="/onboarding" element={<OnboardingRoute><OnboardingPage /></OnboardingRoute>} />
+
           {/* Rutas públicas */}
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
