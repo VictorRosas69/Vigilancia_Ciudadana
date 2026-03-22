@@ -196,3 +196,13 @@ body.dark {
 
 /* ─── Eliminar tap highlight en iOS ─────────────────────────────────────── */
 button, a { -webkit-tap-highlight-color: transparent; }
+
+/* ─── Prevenir zoom automático en inputs (iOS requiere font-size >= 16px) ── */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* ─── Bloquear zoom por gestos touch ────────────────────────────────────── */
+html {
+  touch-action: pan-x pan-y;
+}
