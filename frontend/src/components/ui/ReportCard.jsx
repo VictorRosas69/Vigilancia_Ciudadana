@@ -163,7 +163,7 @@ const ReportCard = ({ report, onRefetch }) => {
             onClick={(e) => { e.stopPropagation(); if (report.author?._id) navigate(`/users/${report.author._id}`); }}
             className="flex items-center gap-1 active:opacity-70 transition-opacity"
           >
-            <div className={`w-8 h-8 bg-gradient-to-br ${avatarGradient} rounded-xl flex items-center justify-center text-white text-xs font-extrabold flex-shrink-0 shadow-sm overflow-hidden`}>
+            <div className={`w-9 h-9 bg-gradient-to-br ${avatarGradient} rounded-full flex items-center justify-center text-white text-xs font-extrabold flex-shrink-0 shadow-sm overflow-hidden`}>
               {report.author?.avatar?.url ? (
                 <img src={report.author.avatar.url} alt="" className="w-full h-full object-cover" />
               ) : authorInitial}
