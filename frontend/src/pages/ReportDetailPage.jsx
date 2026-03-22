@@ -182,15 +182,6 @@ const ReportDetailPage = () => {
     }
   };
 
-  const authorId = report
-    ? (typeof report.author === 'object' ? report.author?._id : report.author)
-    : null;
-  const isOwner = !!(user && authorId && (
-    String(user.id) === String(authorId) ||
-    String(user._id) === String(authorId) ||
-    user.role === 'admin'
-  ));
-
   const handleDeleteReport = async () => {
     try {
       await reportService.delete(id);
@@ -222,6 +213,14 @@ const ReportDetailPage = () => {
       <p className="text-gray-500">Reporte no encontrado</p>
     </div>
   );
+
+  // isOwner se calcula aquí donde report ya está garantizado
+  const authorId = typeof report.author === 'object' ? report.author?._id : report.author;
+  const isOwner = !!(user && authorId && (
+    String(user.id) === String(authorId) ||
+    String(user._id) === String(authorId) ||
+    user.role === 'admin'
+  ));
 
   const timeAgo = formatDistanceToNow(new Date(report.createdAt), { addSuffix: true, locale: es });
   const status = STATUS_CONFIG[report.status] || STATUS_CONFIG.pending;
