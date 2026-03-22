@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { register, login, getMe, updateProfile, changePassword, forgotPassword, resetPassword } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, changePassword, forgotPassword, resetPassword, uploadAvatarController } = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
+const { uploadAvatar } = require('../config/cloudinary');
 const {
   validateRegister, validateLogin, validateForgotPassword,
   validateResetPassword, validateChangePassword,
@@ -41,6 +42,7 @@ router.post('/register', registerLimiter, validateRegister, register);
 router.post('/login', loginLimiter, validateLogin, login);
 router.get('/me', protect, getMe);
 router.put('/me', protect, updateProfile);
+router.post('/me/avatar', protect, uploadAvatar.single('avatar'), uploadAvatarController);
 router.put('/change-password', protect, validateChangePassword, changePassword);
 router.post('/forgot-password', forgotPasswordLimiter, validateForgotPassword, forgotPassword);
 router.post('/reset-password', validateResetPassword, resetPassword);

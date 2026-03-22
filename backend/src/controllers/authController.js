@@ -3,6 +3,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { createNotification } = require('./notificationController');
 const { sendPasswordResetEmail, sendWelcomeEmail } = require('../config/emailService');
+const { cloudinary } = require('../config/cloudinary');
 
 const ALLOWED_EMAIL_DOMAINS = [
   'gmail.com', 'googlemail.com',
@@ -312,4 +313,32 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login, getMe, updateProfile, changePassword, forgotPassword, resetPassword };
+const uploadAvatarController = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No se proporcionó imagen' });
+    }
+
+    // Eliminar avatar anterior de Cloudinary si existe
+    const currentUser = await User.findById(req.user.id);
+    if (currentUser.avatar?.publicId) {
+      await cloudinary.uploader.destroy(currentUser.avatar.publicId).catch(() => {});
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { avatar: { url: req.file.path, publicId: req.file.filename } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Foto de perfil actualizada',
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { register, login, getMe, updateProfile, changePassword, forgotPassword, resetPassword, uploadAvatarController };

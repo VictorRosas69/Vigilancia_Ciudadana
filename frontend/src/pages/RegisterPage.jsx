@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiUser, HiLocationMarker, HiShieldCheck } from 'react-icons/hi';
+import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiUser, HiLocationMarker, HiShieldCheck, HiCamera } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import authService from '../services/authService';
 import Button from '../components/common/Button';
@@ -33,6 +33,9 @@ const RegisterPage = () => {
   const [captchaToken, setCaptchaToken] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const avatarInputRef = useRef(null);
 
   const strength = (() => {
     const p = form.password;
@@ -47,6 +50,17 @@ const RegisterPage = () => {
   const strengthLabel = ['', 'Débil', 'Regular', 'Buena', 'Fuerte'];
   const strengthColor = ['', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
   const strengthTextColor = ['', 'text-red-400', 'text-orange-400', 'text-yellow-500', 'text-green-500'];
+
+  const handleAvatarSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen no puede superar 5 MB');
+      return;
+    }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -79,6 +93,23 @@ const RegisterPage = () => {
     try {
       const { confirmPassword, ...userData } = form;
       const data = await authService.register({ ...userData, captchaToken });
+      // Si hay avatar seleccionado, subirlo con el token recién obtenido
+      if (avatarFile) {
+        try {
+          const formData = new FormData();
+          formData.append('avatar', avatarFile);
+          const { default: api } = await import('../services/api');
+          const avatarRes = await api.post('/auth/me/avatar', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Authorization': `Bearer ${data.token}`,
+            },
+          });
+          data.user = avatarRes.data.user;
+        } catch {
+          // Avatar falla silenciosamente, la cuenta ya fue creada
+        }
+      }
       setAuth(data.user, data.token);
       toast.success('¡Cuenta creada exitosamente!');
       navigate('/');
@@ -154,6 +185,54 @@ const RegisterPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+          {/* ── Foto de perfil (opcional) ── */}
+          <div className="flex flex-col items-center gap-2 pb-2">
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarSelect}
+            />
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={() => avatarInputRef.current?.click()}
+              className="relative w-24 h-24 rounded-3xl overflow-hidden flex-shrink-0 group"
+              style={{
+                background: avatarPreview ? undefined : 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+                border: '2px dashed #bfdbfe',
+                boxShadow: avatarPreview ? '0 8px 24px rgba(0,0,0,0.15)' : 'none',
+              }}
+            >
+              {avatarPreview ? (
+                <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                  <HiCamera className="text-blue-400 text-3xl" />
+                  <span className="text-[10px] text-blue-400 font-semibold text-center leading-tight px-1">
+                    Foto de perfil
+                  </span>
+                </div>
+              )}
+              {/* Overlay hover */}
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity">
+                <HiCamera className="text-white text-2xl" />
+              </div>
+            </motion.button>
+            <p className="text-[11px] text-gray-400 font-medium">
+              {avatarPreview ? (
+                <button
+                  type="button"
+                  onClick={() => { setAvatarFile(null); setAvatarPreview(null); }}
+                  className="text-red-400 font-semibold"
+                >
+                  Eliminar foto
+                </button>
+              ) : 'Opcional · toca para agregar'}
+            </p>
+          </div>
 
           {/* Nombre */}
           <div className="flex flex-col gap-1.5">
