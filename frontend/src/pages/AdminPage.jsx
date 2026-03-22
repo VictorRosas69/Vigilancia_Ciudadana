@@ -6,9 +6,10 @@ import toast from 'react-hot-toast';
 import {
   HiArrowLeft, HiSearch, HiEye, HiTrash,
   HiChevronDown, HiExclamation, HiCheckCircle,
-  HiX, HiRefresh, HiDesktopComputer
+  HiX, HiRefresh, HiDesktopComputer, HiChatAlt
 } from 'react-icons/hi';
 import reportService from '../services/reportService';
+import messageService from '../services/messageService';
 import useAuthStore from '../store/authStore';
 
 const STATUS_OPTIONS = [
@@ -188,6 +189,13 @@ const AdminPage = () => {
     queryFn: () => reportService.getAll({ status: filterStatus, search, limit: 50 }),
   });
 
+  const { data: msgCountData } = useQuery({
+    queryKey: ['admin-msg-count'],
+    queryFn: messageService.getAdminUnreadCount,
+    refetchInterval: 30000,
+  });
+  const adminUnreadCount = msgCountData?.count || 0;
+
   const reports = data?.reports || [];
   const totalInDB = data?.pagination?.total || 0;
 
@@ -294,6 +302,19 @@ const AdminPage = () => {
               style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
             >
               <HiRefresh className={`text-white text-lg ${isFetching ? 'animate-spin' : ''}`} />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              onClick={() => navigate('/admin/messages')}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 relative"
+              style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
+            >
+              <HiChatAlt className="text-white text-lg" />
+              {adminUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5">
+                  {adminUnreadCount > 9 ? '9+' : adminUnreadCount}
+                </span>
+              )}
             </motion.button>
           </div>
 

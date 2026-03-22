@@ -12,6 +12,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const petitionRoutes = require('./routes/petitionRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const trackingRoutes = require('./routes/trackingRoutes');
+const userRoutes = require('./routes/userRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 
 const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
 
@@ -100,6 +102,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/petitions', petitionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/tracking', trackingRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/messages', messageRoutes);
 
 // ─── 9. Errores ───────────────────────────────────────────────────────────────
 app.use(notFound);

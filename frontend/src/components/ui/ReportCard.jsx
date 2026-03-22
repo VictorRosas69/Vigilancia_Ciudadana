@@ -158,10 +158,15 @@ const ReportCard = ({ report, onRefetch }) => {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-3.5 border-t border-gray-50">
-          {/* Autor */}
-          <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 bg-gradient-to-br ${avatarGradient} rounded-xl flex items-center justify-center text-white text-xs font-extrabold flex-shrink-0 shadow-sm`}>
-              {authorInitial}
+          {/* Autor (clickable → perfil público) */}
+          <button
+            onClick={(e) => { e.stopPropagation(); if (report.author?._id) navigate(`/users/${report.author._id}`); }}
+            className="flex items-center gap-2.5 active:opacity-70 transition-opacity"
+          >
+            <div className={`w-8 h-8 bg-gradient-to-br ${avatarGradient} rounded-xl flex items-center justify-center text-white text-xs font-extrabold flex-shrink-0 shadow-sm overflow-hidden`}>
+              {report.author?.avatar?.url ? (
+                <img src={report.author.avatar.url} alt="" className="w-full h-full object-cover" />
+              ) : authorInitial}
             </div>
             <div>
               <p className="text-xs font-bold text-gray-800 leading-tight">
@@ -169,7 +174,7 @@ const ReportCard = ({ report, onRefetch }) => {
               </p>
               <p className="text-[11px] text-gray-400 leading-tight">{timeAgo}</p>
             </div>
-          </div>
+          </button>
 
           {/* Stats */}
           <div className="flex items-center gap-3.5">

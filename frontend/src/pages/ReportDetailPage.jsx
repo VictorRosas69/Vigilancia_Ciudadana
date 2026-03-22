@@ -444,13 +444,16 @@ const ReportDetailPage = () => {
 
           {/* Autor + stats */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-            <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => { const aid = report.author?._id; if (aid) navigate(`/users/${aid}`); }}
+              className="flex items-center gap-2.5 active:opacity-70 transition-opacity"
+            >
               <Avatar name={report.author?.name} />
               <div>
                 <p className="text-sm font-bold text-gray-900">{report.author?.name}</p>
                 <p className="text-xs text-gray-400">{timeAgo}</p>
               </div>
-            </div>
+            </button>
             <div className="flex items-center gap-3">
               <button
                 onClick={handleLike}

@@ -20,6 +20,9 @@ import NotFoundPage from './pages/NotFoundPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import EditReportPage from './pages/EditReportPage';
+import PublicProfilePage from './pages/PublicProfilePage';
+import MessagesPage from './pages/MessagesPage';
+import AdminMessagesPage from './pages/AdminMessagesPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -85,6 +88,9 @@ const App = () => {
             <Route path="admin" element={<AdminPage />} />
             <Route path="stats" element={<StatsPage />} />
             <Route path="petitions" element={<PetitionsPage />} />
+            <Route path="users/:id" element={<PublicProfilePage />} />
+            <Route path="messages" element={<MessagesPage />} />
+            <Route path="admin/messages" element={<AdminMessagesPage />} />
           </Route>
 
           {/* Página 404 */}
