@@ -554,31 +554,43 @@ const ReportDetailPage = () => {
 
       </div>
 
-      {/* ── Barra de comentarios fija — se posiciona SOBRE el BottomNav ── */}
+      {/* ── Barra de comentarios fija ── */}
       <div
-        className="fixed left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-100 px-4 py-3 z-40 max-w-lg mx-auto"
+        className="fixed left-0 right-0 z-40 max-w-lg mx-auto px-3 pb-3"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 72px)' }}
       >
-        <form onSubmit={handleComment} className="flex items-center gap-2.5">
-          <Avatar name={user?.name} size="sm" />
+        <form
+          onSubmit={handleComment}
+          className="flex items-center gap-2 bg-white rounded-2xl px-3 py-2"
+          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06)' }}
+        >
+          {/* Avatar */}
+          <div className="flex-shrink-0">
+            <Avatar name={user?.name} size="sm" />
+          </div>
+
+          {/* Input */}
           <input
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Escribe un comentario..."
-            className="flex-1 bg-gray-100 rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="flex-1 bg-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none py-1.5"
           />
+
+          {/* Botón enviar */}
           <motion.button
             type="submit"
             whileTap={{ scale: 0.88 }}
             disabled={!comment.trim()}
-            className="w-10 h-10 rounded-2xl flex items-center justify-center disabled:opacity-40 flex-shrink-0 transition-all"
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
             style={{
               background: comment.trim()
-                ? 'linear-gradient(135deg, #3b82f6, #2563eb)'
+                ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
                 : '#f1f5f9',
+              boxShadow: comment.trim() ? '0 4px 12px rgba(37,99,235,0.35)' : 'none',
             }}
           >
-            <HiPaperAirplane className={`text-lg rotate-90 ${comment.trim() ? 'text-white' : 'text-gray-400'}`} />
+            <HiPaperAirplane className={`text-base rotate-90 ${comment.trim() ? 'text-white' : 'text-gray-400'}`} />
           </motion.button>
         </form>
       </div>
