@@ -293,8 +293,8 @@ const OnboardingPage = () => {
 
       {/* ── Contenido en tarjeta blanca ── */}
       <motion.div
-        className="relative z-10 bg-white rounded-t-[32px] px-7 pt-8 pb-10 flex flex-col gap-0"
-        style={{ boxShadow: '0 -4px 48px rgba(0,0,0,0.22)', minHeight: '360px' }}
+        className="relative z-10 bg-white rounded-t-[32px] px-7 pt-8 pb-12 flex flex-col flex-1"
+        style={{ boxShadow: '0 -4px 48px rgba(0,0,0,0.22)' }}
         layout
       >
         {/* Tag de slide */}
