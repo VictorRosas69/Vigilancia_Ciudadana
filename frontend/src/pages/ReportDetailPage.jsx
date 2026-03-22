@@ -287,55 +287,92 @@ const ReportDetailPage = () => {
           <HiShare className="text-white text-xl" />
         </button>
 
-        {/* Menú opciones (solo autor/admin) */}
+        {/* Botón ⋮ opciones (solo autor/admin) */}
         {isOwner && (
-          <div className="absolute top-12 right-4">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="w-10 h-10 bg-black/25 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="absolute top-12 right-4 w-10 h-10 bg-black/25 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"
+          >
+            <HiDotsVertical className="text-white text-xl" />
+          </button>
+        )}
+
+        {/* Action sheet opciones */}
+        {menuOpen && (
+          <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setMenuOpen(false)}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="relative bg-white rounded-t-3xl px-4 pt-3 pb-10 max-w-lg mx-auto w-full"
+              onClick={e => e.stopPropagation()}
             >
-              <HiDotsVertical className="text-white text-xl" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-12 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 w-44">
-                <button
-                  onClick={() => { setMenuOpen(false); navigate(`/reports/${id}/edit`); }}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <HiPencil className="text-blue-500" /> Editar reporte
-                </button>
-                <button
-                  onClick={() => { setMenuOpen(false); setConfirmDelete(true); }}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
-                >
-                  <HiTrash className="text-red-500" /> Eliminar reporte
-                </button>
-              </div>
-            )}
+              {/* Handle */}
+              <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+
+              <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest text-center mb-4">
+                Opciones del reporte
+              </p>
+
+              <button
+                onClick={() => { setMenuOpen(false); navigate(`/reports/${id}/edit`); }}
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-blue-50 hover:bg-blue-100 transition-colors mb-3"
+              >
+                <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <HiPencil className="text-white text-lg" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-gray-900">Editar reporte</p>
+                  <p className="text-xs text-gray-400">Modifica título, descripción o ubicación</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => { setMenuOpen(false); setConfirmDelete(true); }}
+                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-red-50 hover:bg-red-100 transition-colors"
+              >
+                <div className="w-10 h-10 bg-red-500 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <HiTrash className="text-white text-lg" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-red-600">Eliminar reporte</p>
+                  <p className="text-xs text-red-400">Esta acción no se puede deshacer</p>
+                </div>
+              </button>
+            </motion.div>
           </div>
         )}
 
         {/* Modal confirmación eliminar */}
         {confirmDelete && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
-            <div className="bg-white rounded-3xl p-6 w-full max-w-sm">
-              <h3 className="text-lg font-extrabold text-gray-900 mb-2">¿Eliminar reporte?</h3>
-              <p className="text-sm text-gray-500 mb-6">Esta acción no se puede deshacer.</p>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center px-4 pb-8">
+            <motion.div
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="bg-white rounded-3xl p-6 w-full max-w-sm"
+            >
+              <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <HiTrash className="text-red-500 text-2xl" />
+              </div>
+              <h3 className="text-lg font-extrabold text-gray-900 text-center mb-1">¿Eliminar reporte?</h3>
+              <p className="text-sm text-gray-400 text-center mb-6">Esta acción no se puede deshacer.</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm"
+                  className="flex-1 py-3.5 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleDeleteReport}
-                  className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold text-sm"
+                  className="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-200"
                 >
-                  Eliminar
+                  Sí, eliminar
                 </button>
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
       </div>
