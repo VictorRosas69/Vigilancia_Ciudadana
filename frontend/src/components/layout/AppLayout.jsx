@@ -20,7 +20,7 @@ const AppLayout = () => {
 
     const connect = () => {
       if (destroyed) return;
-      const base = import.meta.env.VITE_API_URL || '';
+      const base = (import.meta.env.VITE_API_URL || '').replace(/\/api$/, '');
       es = new EventSource(`${base}/api/notifications/stream?token=${token}`);
 
       es.addEventListener('connected', () => {
