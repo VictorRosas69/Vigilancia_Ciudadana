@@ -121,7 +121,7 @@ const ReportDetailModal = ({ reportId, onClose, onStatusChange, onDelete }) => {
                   <div className="flex gap-2">
                     {report.images.map((img, i) => (
                       <button key={i} onClick={() => setImgIdx(i)}
-                        className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${imgIdx === i ? 'border-indigo-500' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                        className={`w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${imgIdx === i ? 'border-blue-500' : 'border-transparent opacity-60 hover:opacity-100'}`}
                       >
                         <img src={img.url} alt="" className="w-full h-full object-cover" />
                       </button>
@@ -201,7 +201,7 @@ const ReportDetailModal = ({ reportId, onClose, onStatusChange, onDelete }) => {
                 <select
                   value={report.status}
                   onChange={e => handleStatusChange(e.target.value)}
-                  className={`w-full text-sm px-3 py-2 rounded-xl border font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-300 ${STATUS_MAP[report.status]?.cls || ''}`}
+                  className={`w-full text-sm px-3 py-2 rounded-xl border font-semibold cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300 ${STATUS_MAP[report.status]?.cls || ''}`}
                 >
                   {Object.entries(STATUS_MAP).map(([val, { label }]) => (
                     <option key={val} value={val}>{label}</option>
@@ -277,20 +277,20 @@ const OverviewTab = ({ onViewReport }) => {
   };
 
   const STAT_CARDS = [
-    { label: 'Total reportes',  value: stats?.reports.total,      color: 'bg-indigo-500', light: 'bg-indigo-50', text: 'text-indigo-600', icon: '📋' },
-    { label: 'Usuarios activos',value: stats?.users.active,       color: 'bg-blue-500',   light: 'bg-blue-50',   text: 'text-blue-600',   icon: '👥' },
-    { label: 'Resueltos',       value: stats?.reports.resolved,   color: 'bg-green-500',  light: 'bg-green-50',  text: 'text-green-600',  icon: '✅' },
-    { label: 'Pendientes',      value: stats?.reports.pending,    color: 'bg-amber-500',  light: 'bg-amber-50',  text: 'text-amber-600',  icon: '⏳' },
-    { label: 'En progreso',     value: stats?.reports.inProgress, color: 'bg-violet-500', light: 'bg-violet-50', text: 'text-violet-600', icon: '⚙️' },
-    { label: 'Rechazados',      value: stats?.reports.rejected,   color: 'bg-red-500',    light: 'bg-red-50',    text: 'text-red-600',    icon: '🚫' },
-    { label: 'Total usuarios',  value: stats?.users.total,        color: 'bg-sky-500',    light: 'bg-sky-50',    text: 'text-sky-600',    icon: '🧑‍💻' },
-    { label: 'Comentarios',     value: stats?.comments.total,     color: 'bg-pink-500',   light: 'bg-pink-50',   text: 'text-pink-600',   icon: '💬' },
+    { label: 'Total reportes',  value: stats?.reports.total,      accent: '#3b82f6', icon: '📋' },
+    { label: 'Usuarios activos',value: stats?.users.active,       accent: '#0ea5e9', icon: '👥' },
+    { label: 'Resueltos',       value: stats?.reports.resolved,   accent: '#22c55e', icon: '✅' },
+    { label: 'Pendientes',      value: stats?.reports.pending,    accent: '#f59e0b', icon: '⏳' },
+    { label: 'En progreso',     value: stats?.reports.inProgress, accent: '#8b5cf6', icon: '⚙️' },
+    { label: 'Rechazados',      value: stats?.reports.rejected,   accent: '#ef4444', icon: '🚫' },
+    { label: 'Total usuarios',  value: stats?.users.total,        accent: '#06b6d4', icon: '🧑‍💻' },
+    { label: 'Comentarios',     value: stats?.comments.total,     accent: '#ec4899', icon: '💬' },
   ];
 
   if (isLoading) return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {Array.from({length: 8}).map((_, i) => (
-        <div key={i} className="bg-white rounded-2xl border border-gray-100 h-28 animate-pulse" />
+        <div key={i} className="bg-white rounded-2xl h-24 animate-pulse" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }} />
       ))}
     </div>
   );
@@ -300,13 +300,15 @@ const OverviewTab = ({ onViewReport }) => {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {STAT_CARDS.map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className={`w-12 h-12 ${s.light} rounded-xl flex items-center justify-center text-2xl flex-shrink-0`}>
+          <div key={s.label} className="bg-white rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-all group"
+            style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)', borderLeft: `4px solid ${s.accent}` }}>
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+              style={{ background: `${s.accent}18` }}>
               {s.icon}
             </div>
             <div className="min-w-0">
-              <p className="text-2xl font-extrabold text-gray-800 leading-none">{s.value ?? '—'}</p>
-              <p className={`text-xs font-semibold mt-1 ${s.text}`}>{s.label}</p>
+              <p className="text-2xl font-extrabold text-gray-900 leading-none tabular-nums">{s.value ?? '—'}</p>
+              <p className="text-xs font-semibold mt-1.5" style={{ color: s.accent }}>{s.label}</p>
             </div>
           </div>
         ))}
@@ -322,7 +324,7 @@ const OverviewTab = ({ onViewReport }) => {
               <h3 className="font-extrabold text-gray-800">Reportes por mes</h3>
               <p className="text-xs text-gray-400 mt-0.5">Últimos 6 meses</p>
             </div>
-            <span className="text-xs bg-indigo-50 text-indigo-600 font-semibold px-3 py-1 rounded-lg">
+            <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-3 py-1 rounded-lg">
               Total: {stats?.reports.total ?? 0}
             </span>
           </div>
@@ -335,7 +337,8 @@ const OverviewTab = ({ onViewReport }) => {
                   <span className="text-xs font-bold text-gray-500">{count > 0 ? count : ''}</span>
                   <div className="w-full flex items-end justify-center" style={{ height: '140px' }}>
                     <div
-                      className={`w-full rounded-t-xl transition-all duration-700 ${isLast ? 'bg-indigo-600' : 'bg-indigo-200'}`}
+                      className="w-full rounded-t-xl transition-all duration-700"
+                      style={{ background: isLast ? 'linear-gradient(180deg, #3b82f6, #1d4ed8)' : '#bfdbfe' }}
                       style={{ height: `${Math.max(pct, count > 0 ? 6 : 2)}%` }}
                     />
                   </div>
@@ -417,7 +420,7 @@ const OverviewTab = ({ onViewReport }) => {
                 <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold border flex-shrink-0 ${status.cls}`}>{status.label}</span>
                 <button
                   onClick={() => onViewReport(report._id)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0"
                 >
                   {Icons.eye}
                 </button>
@@ -479,20 +482,20 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
             placeholder="Buscar por título o descripción..."
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
           />
         </div>
         <select
           value={filterStatus}
           onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white text-gray-700"
+          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white text-gray-700"
         >
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_MAP).map(([val, { label }]) => (
             <option key={val} value={val}>{label}</option>
           ))}
         </select>
-        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1"><span className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />Cargando...</span>}
+        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1"><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Cargando...</span>}
         <button
           onClick={async () => {
             setExporting(true);
@@ -507,7 +510,7 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
             }
           }}
           disabled={exporting}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-60 shadow-sm shadow-indigo-200 ml-auto"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 shadow-sm shadow-blue-200 ml-auto"
         >
           {exporting
             ? <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />Generando...</>
@@ -568,7 +571,7 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
                   <td className="px-5 py-3.5 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmt(report.createdAt)}</span></td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1.5 justify-end">
-                      <button onClick={() => onViewReport(report._id)} title="Ver detalle" className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">{Icons.eye}</button>
+                      <button onClick={() => onViewReport(report._id)} title="Ver detalle" className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">{Icons.eye}</button>
                       <button onClick={() => handleDelete(report._id)} title="Eliminar" className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">{Icons.trash}</button>
                     </div>
                   </td>
@@ -583,7 +586,7 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
             <span className="text-xs text-gray-400">Mostrando {reports.length} de {pagination.total} reportes</span>
             <div className="flex gap-1.5">
               <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Anterior</button>
-              <span className="px-3 py-1.5 text-xs rounded-lg bg-indigo-600 text-white font-semibold">{page}</span>
+              <span className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-semibold">{page}</span>
               <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Siguiente</button>
             </div>
           </div>
@@ -633,18 +636,18 @@ const UsersTab = () => {
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{Icons.search}</span>
           <input type="text" placeholder="Buscar por nombre, email o ciudad..." value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
           />
         </div>
         <select value={filterRole} onChange={e => { setFilterRole(e.target.value); setPage(1); }}
-          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white text-gray-700"
+          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white text-gray-700"
         >
           <option value="">Todos los roles</option>
           <option value="citizen">Ciudadano</option>
           <option value="moderator">Moderador</option>
           <option value="admin">Admin</option>
         </select>
-        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1"><span className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />Cargando...</span>}
+        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1"><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Cargando...</span>}
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -676,7 +679,7 @@ const UsersTab = () => {
                 <tr key={user._id} className="hover:bg-gray-50/70 transition-colors">
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm flex-shrink-0 uppercase">
+                      <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0 uppercase">
                         {user.name?.charAt(0) || '?'}
                       </div>
                       <span className="font-semibold text-gray-800 truncate max-w-[140px]">{user.name}</span>
@@ -733,7 +736,7 @@ const UsersTab = () => {
             <span className="text-xs text-gray-400">Mostrando {users.length} de {pagination.total} usuarios</span>
             <div className="flex gap-1.5">
               <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Anterior</button>
-              <span className="px-3 py-1.5 text-xs rounded-lg bg-indigo-600 text-white font-semibold">{page}</span>
+              <span className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-semibold">{page}</span>
               <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Siguiente</button>
             </div>
           </div>
@@ -831,7 +834,7 @@ const PetitionsTab = () => {
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Título de la petición *</label>
             <input required value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               placeholder="Ej: Solicitud de reparación urgente de vías en el barrio Centro"
-              className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </div>
 
@@ -840,13 +843,13 @@ const PetitionsTab = () => {
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Nombre del destinatario</label>
               <input value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))}
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Cargo</label>
               <input value={form.recipientTitle} onChange={e => setForm(f => ({ ...f, recipientTitle: e.target.value }))}
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
           </div>
@@ -855,13 +858,13 @@ const PetitionsTab = () => {
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Ciudad / Municipio</label>
               <input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Meta de firmas</label>
               <input type="number" min={1} value={form.goal} onChange={e => setForm(f => ({ ...f, goal: Number(e.target.value) }))}
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
           </div>
@@ -872,7 +875,7 @@ const PetitionsTab = () => {
             <p className="text-xs text-gray-400 mb-2">Escribe el texto formal de la petición. Usa saltos de línea para separar párrafos.</p>
             <textarea required value={form.body} onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
               rows={8} placeholder="Los ciudadanos del municipio de Pasto, debidamente identificados, nos dirigimos respetuosamente a su despacho con el fin de..."
-              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none leading-relaxed"
+              className="w-full px-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none leading-relaxed"
             />
           </div>
 
@@ -882,10 +885,10 @@ const PetitionsTab = () => {
             <div className="space-y-2">
               {form.requests.map((req, i) => (
                 <div key={i} className="flex gap-2">
-                  <span className="flex-shrink-0 w-6 h-10 flex items-center justify-center text-xs font-bold text-indigo-500">{i + 1}.</span>
+                  <span className="flex-shrink-0 w-6 h-10 flex items-center justify-center text-xs font-bold text-blue-500">{i + 1}.</span>
                   <input value={req} onChange={e => handleRequestChange(i, e.target.value)}
                     placeholder="Ej: Proceder a la reparación inmediata de los tramos afectados..."
-                    className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    className="flex-1 px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300"
                   />
                   {form.requests.length > 1 && (
                     <button type="button" onClick={() => setForm(f => ({ ...f, requests: f.requests.filter((_, j) => j !== i) }))}
@@ -895,7 +898,7 @@ const PetitionsTab = () => {
                 </div>
               ))}
               <button type="button" onClick={() => setForm(f => ({ ...f, requests: [...f.requests, ''] }))}
-                className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-semibold mt-1"
+                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 font-semibold mt-1"
               >{Icons.plus} Agregar punto</button>
             </div>
           </div>
@@ -915,7 +918,7 @@ const PetitionsTab = () => {
               className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-semibold text-sm hover:bg-gray-200 transition-colors"
             >Cancelar</button>
             <button type="submit" disabled={saveMutation.isPending}
-              className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-60 shadow-sm shadow-indigo-200"
+              className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-colors disabled:opacity-60 shadow-sm shadow-blue-200"
             >{saveMutation.isPending ? 'Guardando...' : (view === 'edit' ? 'Guardar cambios' : 'Crear petición')}</button>
           </div>
         </form>
@@ -929,7 +932,7 @@ const PetitionsTab = () => {
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{petitions.length} petición(es) creada(s)</p>
         <button onClick={() => setView('create')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-200"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200"
         >{Icons.plus} Nueva petición</button>
       </div>
 
@@ -963,7 +966,7 @@ const PetitionsTab = () => {
                 <p className="text-xs text-gray-500 mt-1">Para: {petition.recipientTitle} · {petition.city}</p>
               </div>
               <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button onClick={() => openEdit(petition)} title="Editar" className="p-2 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors">{Icons.pen}</button>
+                <button onClick={() => openEdit(petition)} title="Editar" className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">{Icons.pen}</button>
                 <button
                   onClick={() => handleExportWord(petition._id)}
                   disabled={exportingId === petition._id}
@@ -987,7 +990,7 @@ const PetitionsTab = () => {
                 <span className="text-xs text-gray-400">Meta: {petition.goal}</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-indigo-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                <div className="h-full bg-blue-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
               </div>
               <p className="text-xs text-gray-400 mt-1 text-right">{pct}% completado</p>
             </div>
@@ -1050,15 +1053,19 @@ const AdminDashboardPage = () => {
     <div className="min-h-screen bg-gray-50 flex">
 
       {/* Sidebar */}
-      <aside className="w-60 bg-white border-r border-gray-100 flex flex-col shadow-sm flex-shrink-0 fixed h-full z-10">
-        <div className="px-5 py-5 border-b border-gray-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-md shadow-indigo-200">
-              <span className="text-white text-sm font-extrabold">VC</span>
+      <aside className="w-60 flex flex-col flex-shrink-0 fixed h-full z-10" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%)' }}>
+        {/* Logo */}
+        <div className="px-5 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', boxShadow: '0 4px 14px rgba(37,99,235,0.5)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
             </div>
             <div>
-              <p className="text-sm font-extrabold text-gray-800 leading-none">Vigilancia</p>
-              <p className="text-xs text-indigo-500 font-semibold mt-0.5">Panel Admin</p>
+              <p className="text-sm font-extrabold text-white leading-none">Vigilancia</p>
+              <p className="text-xs font-semibold mt-0.5" style={{ color: 'rgba(147,197,253,0.8)' }}>Panel Admin</p>
             </div>
           </div>
         </div>
@@ -1066,26 +1073,40 @@ const AdminDashboardPage = () => {
         <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV.map(item => (
             <button key={item.id} onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                activeTab === item.id
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
-              }`}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={activeTab === item.id ? {
+                background: 'rgba(59,130,246,0.25)',
+                color: 'white',
+                boxShadow: 'inset 0 0 0 1px rgba(59,130,246,0.4)',
+              } : {
+                color: 'rgba(148,163,184,1)',
+              }}
+              onMouseEnter={e => { if (activeTab !== item.id) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+              onMouseLeave={e => { if (activeTab !== item.id) e.currentTarget.style.background = 'transparent'; }}
             >
-              {item.icon}
+              <span style={{ color: activeTab === item.id ? '#93c5fd' : 'rgba(148,163,184,0.8)' }}>{item.icon}</span>
               {item.label}
+              {activeTab === item.id && (
+                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />
+              )}
             </button>
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-gray-100 space-y-1">
+        <div className="px-3 py-4 space-y-1" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <button onClick={() => navigate('/')}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-all"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{ color: 'rgba(148,163,184,1)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'white'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(148,163,184,1)'; }}
           >
             {Icons.mobile} Ver App Móvil
           </button>
           <button onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-red-400 hover:bg-red-50 hover:text-red-600 transition-all"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            style={{ color: 'rgba(252,165,165,0.9)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; e.currentTarget.style.color = '#fca5a5'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(252,165,165,0.9)'; }}
           >
             {Icons.logout} Cerrar sesión
           </button>
@@ -1095,20 +1116,24 @@ const AdminDashboardPage = () => {
       {/* Contenido principal */}
       <main className="flex-1 ml-60 min-h-screen flex flex-col">
         {/* Topbar */}
-        <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+        <header className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-10" style={{ borderBottom: '1px solid #f1f5f9', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
           <div>
-            <h1 className="text-lg font-extrabold text-gray-800">{NAV.find(n => n.id === activeTab)?.label}</h1>
+            <h1 className="text-lg font-extrabold text-gray-900">{NAV.find(n => n.id === activeTab)?.label}</h1>
             <p className="text-xs text-gray-400 mt-0.5 capitalize">
-              {new Date().toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-gray-700">{user?.name}</p>
-              <p className="text-xs text-indigo-500 font-semibold">Administrador</p>
+              <p className="text-sm font-bold text-gray-800">{user?.name}</p>
+              <p className="text-xs font-semibold" style={{ color: '#3b82f6' }}>Administrador</p>
             </div>
-            <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-extrabold text-sm uppercase">
-              {user?.name?.charAt(0) || 'A'}
+            <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-extrabold text-sm uppercase flex-shrink-0"
+              style={{ background: user?.avatar?.url ? 'transparent' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: 'white', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>
+              {user?.avatar?.url
+                ? <img src={user.avatar.url} alt={user.name} className="w-full h-full object-cover" />
+                : (user?.name?.charAt(0) || 'A')
+              }
             </div>
           </div>
         </header>
