@@ -15,6 +15,7 @@ const loginLimiter = rateLimit({
   message: { success: false, message: 'Demasiados intentos. Intenta de nuevo en 15 minutos.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 const registerLimiter = rateLimit({
@@ -23,6 +24,7 @@ const registerLimiter = rateLimit({
   message: { success: false, message: 'Demasiados registros desde esta IP. Intenta en 1 hora.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 const forgotPasswordLimiter = rateLimit({
@@ -31,6 +33,7 @@ const forgotPasswordLimiter = rateLimit({
   message: { success: false, message: 'Demasiadas solicitudes de recuperación. Intenta en 1 hora.' },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
 });
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────
