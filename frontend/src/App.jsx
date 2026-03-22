@@ -19,6 +19,7 @@ import PetitionsPage from './pages/PetitionsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import EditReportPage from './pages/EditReportPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +79,7 @@ const App = () => {
             <Route path="map" element={<MapPage />} />
             <Route path="create-report" element={<CreateReportPage />} />
             <Route path="reports/:id" element={<ReportDetailPage />} />
+            <Route path="reports/:id/edit" element={<EditReportPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="admin" element={<AdminPage />} />
