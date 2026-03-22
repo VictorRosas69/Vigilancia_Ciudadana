@@ -159,9 +159,9 @@ const ReportCard = ({ report, onRefetch }) => {
         {/* Footer */}
         <div className="flex items-center justify-between pt-3.5 border-t border-gray-50">
           {/* Autor (clickable → perfil público) */}
-          <button
+          <div
             onClick={(e) => { e.stopPropagation(); if (report.author?._id) navigate(`/users/${report.author._id}`); }}
-            className="flex items-center gap-1 active:opacity-70 transition-opacity"
+            className="flex items-center gap-2 cursor-pointer active:opacity-70 transition-opacity"
           >
             <div className={`w-9 h-9 bg-gradient-to-br ${avatarGradient} rounded-full flex items-center justify-center text-white text-xs font-extrabold flex-shrink-0 shadow-sm overflow-hidden`}>
               {report.author?.avatar?.url ? (
@@ -174,7 +174,7 @@ const ReportCard = ({ report, onRefetch }) => {
               </p>
               <p className="text-[11px] text-gray-400 leading-tight">{timeAgo}</p>
             </div>
-          </button>
+          </div>
 
           {/* Stats */}
           <div className="flex items-center gap-3.5">
