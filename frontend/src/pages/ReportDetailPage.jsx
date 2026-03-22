@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { HiArrowLeft, HiLocationMarker, HiHeart, HiChatAlt, HiEye, HiTrash, HiPaperAirplane, HiShare } from 'react-icons/hi';
+import { HiArrowLeft, HiLocationMarker, HiHeart, HiChatAlt, HiEye, HiTrash, HiPaperAirplane, HiShare, HiDotsVertical, HiPencil } from 'react-icons/hi';
 import reportService from '../services/reportService';
 import commentService from '../services/commentService';
 import useAuthStore from '../store/authStore';
@@ -132,6 +132,8 @@ const ReportDetailPage = () => {
   const [likesCount, setLikesCount] = useState(0);
   const [activeImage, setActiveImage] = useState(0);
   const [initialized, setInitialized] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['report', id],
@@ -177,6 +179,18 @@ const ReportDetailPage = () => {
     } catch (err) {
       const msg = err?.response?.data?.message || 'Error al comentar';
       toast.error(msg);
+    }
+  };
+
+  const isOwner = user && report && (user.id === report.author?._id || user._id === report.author?._id || user.role === 'admin');
+
+  const handleDeleteReport = async () => {
+    try {
+      await reportService.delete(id);
+      toast.success('Reporte eliminado');
+      navigate('/');
+    } catch {
+      toast.error('Error al eliminar el reporte');
     }
   };
 
@@ -262,10 +276,62 @@ const ReportDetailPage = () => {
               toast.success('Enlace copiado al portapapeles');
             }
           }}
-          className="absolute top-12 right-4 w-10 h-10 bg-black/25 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"
+          className="absolute top-12 right-16 w-10 h-10 bg-black/25 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"
         >
           <HiShare className="text-white text-xl" />
         </button>
+
+        {/* Menú opciones (solo autor/admin) */}
+        {isOwner && (
+          <div className="absolute top-12 right-4">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="w-10 h-10 bg-black/25 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"
+            >
+              <HiDotsVertical className="text-white text-xl" />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-12 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 w-44">
+                <button
+                  onClick={() => { setMenuOpen(false); navigate(`/reports/${id}/edit`); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <HiPencil className="text-blue-500" /> Editar reporte
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); setConfirmDelete(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
+                >
+                  <HiTrash className="text-red-500" /> Eliminar reporte
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Modal confirmación eliminar */}
+        {confirmDelete && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
+            <div className="bg-white rounded-3xl p-6 w-full max-w-sm">
+              <h3 className="text-lg font-extrabold text-gray-900 mb-2">¿Eliminar reporte?</h3>
+              <p className="text-sm text-gray-500 mb-6">Esta acción no se puede deshacer.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteReport}
+                  className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold text-sm"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Thumbnails ── */}
