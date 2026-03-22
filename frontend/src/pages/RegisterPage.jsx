@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiUser, HiLocationMarker } from 'react-icons/hi';
+import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiUser, HiLocationMarker, HiShieldCheck } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import authService from '../services/authService';
 import Button from '../components/common/Button';
@@ -34,7 +34,6 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Fortaleza de contraseña
   const strength = (() => {
     const p = form.password;
     if (!p) return 0;
@@ -81,7 +80,7 @@ const RegisterPage = () => {
       const { confirmPassword, ...userData } = form;
       const data = await authService.register({ ...userData, captchaToken });
       setAuth(data.user, data.token);
-      toast.success('¡Cuenta creada exitosamente! 🎉');
+      toast.success('¡Cuenta creada exitosamente!');
       navigate('/');
     } catch (error) {
       const message = error.response?.data?.message || 'Error al crear la cuenta';
@@ -93,143 +92,158 @@ const RegisterPage = () => {
     }
   };
 
-  const inputClass = (hasError) =>
-    `w-full border rounded-2xl px-4 py-4 text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:border-transparent transition-all ${
-      hasError ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-blue-500'
+  const inputBase = (hasError) =>
+    `w-full border bg-gray-50/60 rounded-2xl px-4 py-3.5 text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:border-transparent focus:bg-white transition-all text-base ${
+      hasError
+        ? 'border-red-300 focus:ring-red-400'
+        : 'border-gray-200 focus:ring-blue-500'
     }`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-blue-900 flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{
+      background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 40%, #2563eb 100%)'
+    }}>
 
-      {/* ── Sección azul superior ── */}
+      {/* ── Decoración de fondo ── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%)' }} />
+        <div className="absolute top-1/3 -left-20 w-56 h-56 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)' }} />
+      </div>
+
+      {/* ── Branding superior ── */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative flex flex-col items-center justify-center pt-14 pb-8 px-6 overflow-hidden"
+        transition={{ duration: 0.55, ease: 'easeOut' }}
+        className="relative z-10 flex flex-col items-center justify-center pt-14 pb-8 px-6"
       >
-        {/* Círculos decorativos */}
-        <div className="absolute -top-6 -right-6 w-40 h-40 bg-white/10 rounded-full" />
-        <div className="absolute top-6 right-4 w-24 h-24 bg-white/10 rounded-full" />
-
-        {/* Ícono escudo */}
-        <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-5 shadow-lg z-10">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <div className="w-[60px] h-[60px] rounded-[20px] flex items-center justify-center mb-4"
+          style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)',
+            backdropFilter: 'blur(16px)',
+            border: '1.5px solid rgba(255,255,255,0.2)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          }}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+            stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         </div>
 
-        <h1 className="text-3xl font-bold text-white z-10">Vigilancia Ciudadana</h1>
-        <p className="text-blue-200 text-base mt-1 z-10">Reporta obras abandonadas</p>
+        <h1 className="text-white text-xl font-bold tracking-tight text-center">
+          Vigilancia Ciudadana
+        </h1>
+        <p className="text-blue-300/70 text-sm mt-1 font-medium">
+          Plataforma de reporte ciudadano
+        </p>
       </motion.div>
 
-      {/* ── Sección blanca del formulario ── */}
+      {/* ── Tarjeta del formulario ── */}
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="flex-1 bg-white rounded-t-3xl px-6 pt-8 pb-10 shadow-2xl"
+        transition={{ duration: 0.55, delay: 0.12, ease: 'easeOut' }}
+        className="relative z-10 flex-1 bg-white rounded-t-[32px] px-6 pt-7 pb-12"
+        style={{ boxShadow: '0 -4px 40px rgba(0,0,0,0.18)' }}
       >
-        <h2 className="text-2xl font-bold text-gray-900">Crear cuenta 🎉</h2>
-        <p className="text-gray-400 text-sm mt-0.5 mb-6">Únete a la comunidad</p>
+        <div className="mb-6">
+          <h2 className="text-[24px] font-extrabold text-gray-900 leading-snug">Crear cuenta</h2>
+          <p className="text-gray-400 text-sm mt-1">Únete a la comunidad ciudadana</p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
 
           {/* Nombre */}
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-widest mb-2">
-              Nombre Completo
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Nombre completo
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-                <HiUser />
-              </span>
+              <HiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]" />
               <input
                 name="name"
                 type="text"
                 placeholder="Tu nombre completo"
                 value={form.name}
                 onChange={handleChange}
-                className={`${inputClass(errors.name)} pl-11`}
+                autoComplete="name"
+                className={`${inputBase(errors.name)} pl-11`}
               />
             </div>
-            {errors.name && <p className="text-xs text-red-500 mt-1">⚠️ {errors.name}</p>}
+            {errors.name && <p className="text-xs text-red-500 font-medium">⚠ {errors.name}</p>}
           </div>
 
           {/* Email */}
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-widest mb-2">
-              Correo Electrónico
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Correo electrónico
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-                <HiMail />
-              </span>
+              <HiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]" />
               <input
                 name="email"
                 type="email"
                 placeholder="correo@ejemplo.com"
                 value={form.email}
                 onChange={handleChange}
-                className={`${inputClass(errors.email)} pl-11`}
+                autoComplete="email"
+                className={`${inputBase(errors.email)} pl-11`}
               />
             </div>
-            {errors.email && <p className="text-xs text-red-500 mt-1">⚠️ {errors.email}</p>}
+            {errors.email && <p className="text-xs text-red-500 font-medium">⚠ {errors.email}</p>}
           </div>
 
           {/* Ciudad */}
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-widest mb-2">
-              Ciudad
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Ciudad <span className="text-gray-300 normal-case font-normal">(opcional)</span>
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-                <HiLocationMarker />
-              </span>
+              <HiLocationMarker className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]" />
               <input
                 name="city"
                 type="text"
                 placeholder="Tu ciudad"
                 value={form.city}
                 onChange={handleChange}
-                className={`${inputClass(false)} pl-11`}
+                className={`${inputBase(false)} pl-11`}
               />
             </div>
           </div>
 
           {/* Contraseña */}
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-widest mb-2">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
               Contraseña
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-                <HiLockClosed />
-              </span>
+              <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]" />
               <input
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Mínimo 6 caracteres"
                 value={form.password}
                 onChange={handleChange}
-                className={`${inputClass(errors.password)} pl-11 pr-12`}
+                autoComplete="new-password"
+                className={`${inputBase(errors.password)} pl-11 pr-12`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 active:text-gray-600 transition-colors"
               >
-                {showPassword ? <HiEyeOff className="text-xl" /> : <HiEye className="text-xl" />}
+                {showPassword ? <HiEyeOff className="text-[18px]" /> : <HiEye className="text-[18px]" />}
               </button>
             </div>
-            {/* Indicador de fortaleza */}
+            {/* Barra de fortaleza */}
             {form.password.length > 0 && (
-              <div className="mt-2">
+              <div>
                 <div className="flex gap-1 mb-1">
                   {[1, 2, 3, 4].map(i => (
-                    <div
-                      key={i}
-                      className={`h-1 flex-1 rounded-full transition-all ${i <= strength ? strengthColor[strength] : 'bg-gray-200'}`}
+                    <div key={i}
+                      className={`h-1 flex-1 rounded-full transition-all ${i <= strength ? strengthColor[strength] : 'bg-gray-100'}`}
                     />
                   ))}
                 </div>
@@ -238,39 +252,39 @@ const RegisterPage = () => {
                 </p>
               </div>
             )}
-            {errors.password && <p className="text-xs text-red-500 mt-1">⚠️ {errors.password}</p>}
+            {errors.password && <p className="text-xs text-red-500 font-medium">⚠ {errors.password}</p>}
           </div>
 
           {/* Confirmar contraseña */}
-          <div>
-            <label className="block text-xs font-bold text-gray-600 uppercase tracking-widest mb-2">
-              Confirmar Contraseña
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+              Confirmar contraseña
             </label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-                <HiLockClosed />
-              </span>
+              <HiLockClosed className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]" />
               <input
                 name="confirmPassword"
                 type={showConfirm ? 'text' : 'password'}
                 placeholder="Repite tu contraseña"
                 value={form.confirmPassword}
                 onChange={handleChange}
-                className={`${inputClass(errors.confirmPassword)} pl-11 pr-12`}
+                autoComplete="new-password"
+                className={`${inputBase(errors.confirmPassword)} pl-11 pr-12`}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 active:text-gray-600 transition-colors"
               >
-                {showConfirm ? <HiEyeOff className="text-xl" /> : <HiEye className="text-xl" />}
+                {showConfirm ? <HiEyeOff className="text-[18px]" /> : <HiEye className="text-[18px]" />}
               </button>
             </div>
-            {errors.confirmPassword && <p className="text-xs text-red-500 mt-1">⚠️ {errors.confirmPassword}</p>}
+            {errors.confirmPassword && <p className="text-xs text-red-500 font-medium">⚠ {errors.confirmPassword}</p>}
           </div>
 
           {/* reCAPTCHA */}
-          <div className="border border-gray-200 rounded-2xl overflow-hidden flex items-center justify-center py-2">
+          <div className="rounded-2xl overflow-hidden flex items-center justify-center py-2"
+            style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}>
             <ReCAPTCHA
               ref={recaptchaRef}
               sitekey={RECAPTCHA_SITE_KEY}
@@ -279,27 +293,51 @@ const RegisterPage = () => {
               hl="es"
             />
           </div>
-          {errors.captcha && <p className="text-xs text-red-500 -mt-3">⚠️ {errors.captcha}</p>}
+          {errors.captcha && <p className="text-xs text-red-500 font-medium -mt-2">⚠ {errors.captcha}</p>}
 
-          <Button
+          {/* Botón */}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             type="submit"
-            variant="primary"
-            fullWidth
-            loading={loading}
-            disabled={!captchaToken}
-            className="!py-4 !rounded-2xl !text-base"
+            disabled={loading || !captchaToken}
+            className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            style={{
+              background: loading
+                ? '#93c5fd'
+                : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 60%, #1d4ed8 100%)',
+              boxShadow: loading ? 'none' : '0 6px 20px rgba(37,99,235,0.38)',
+            }}
           >
-            Crear cuenta
-          </Button>
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Creando cuenta...
+              </>
+            ) : 'Crear cuenta'}
+          </motion.button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-400 text-sm">
-            ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="text-blue-600 font-bold hover:underline">
-              Inicia sesión
-            </Link>
-          </p>
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-5">
+          <div className="flex-1 h-px bg-gray-100" />
+          <span className="text-xs text-gray-300 font-medium px-1">o</span>
+          <div className="flex-1 h-px bg-gray-100" />
+        </div>
+
+        <p className="text-center text-gray-400 text-sm">
+          ¿Ya tienes cuenta?{' '}
+          <Link to="/login" className="text-blue-600 font-bold">
+            Inicia sesión
+          </Link>
+        </p>
+
+        {/* Badge seguridad */}
+        <div className="flex items-center justify-center gap-1.5 mt-5">
+          <HiShieldCheck className="text-gray-300 text-sm" />
+          <span className="text-[11px] text-gray-300 font-medium">Conexión segura y cifrada</span>
         </div>
       </motion.div>
     </div>
