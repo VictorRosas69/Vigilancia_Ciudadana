@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   HiMail, HiLocationMarker, HiPencil,
-  HiLogout, HiClipboardList, HiCheck, HiChevronRight, HiBell
+  HiLogout, HiClipboardList, HiCheck, HiChevronRight, HiBell, HiCamera
 } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import authService from '../services/authService';
@@ -36,6 +36,8 @@ const ProfilePage = () => {
   const { user, token, updateUser, logout } = useAuthStore();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const avatarInputRef = useRef(null);
   const [form, setForm] = useState({
     name: user?.name || '',
     city: user?.city || '',
@@ -65,6 +67,26 @@ const ProfilePage = () => {
     resolved:   myReports.filter(r => r.status === 'resolved').length,
     pending:    myReports.filter(r => r.status === 'pending').length,
     inProgress: myReports.filter(r => r.status === 'inProgress').length,
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen no puede superar 5 MB');
+      return;
+    }
+    setAvatarLoading(true);
+    try {
+      const data = await authService.uploadAvatar(file);
+      updateUser(data.user);
+      toast.success('Foto de perfil actualizada');
+    } catch {
+      toast.error('Error al subir la foto');
+    } finally {
+      setAvatarLoading(false);
+      e.target.value = '';
+    }
   };
 
   const handleChange = (e) =>
@@ -132,14 +154,52 @@ const ProfilePage = () => {
 
           {/* Avatar + info */}
           <div className="flex items-center gap-4">
+            {/* Avatar con botón de cámara */}
             <div className="relative flex-shrink-0">
-              <div className={`w-20 h-20 bg-gradient-to-br ${gradient} rounded-3xl flex items-center justify-center`}
-                style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
-                <span className="text-white text-3xl font-extrabold">
-                  {firstName[0]?.toUpperCase()}
-                </span>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => avatarInputRef.current?.click()}
+                className="relative w-20 h-20 rounded-3xl overflow-hidden flex-shrink-0"
+                style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}
+              >
+                {user?.avatar?.url ? (
+                  <img
+                    src={user.avatar.url}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                    <span className="text-white text-3xl font-extrabold">
+                      {firstName[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                {/* Overlay cámara */}
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 active:opacity-100 transition-opacity rounded-3xl">
+                  {avatarLoading ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <HiCamera className="text-white text-2xl" />
+                  )}
+                </div>
+              </motion.button>
+              {/* Indicador de cámara siempre visible */}
+              <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center pointer-events-none"
+                style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', border: '2px solid rgba(15,23,42,1)' }}>
+                {avatarLoading ? (
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <HiCamera className="text-white text-xs" />
+                )}
               </div>
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full border-2 border-blue-900" />
             </div>
 
             <div className="flex-1 min-w-0">

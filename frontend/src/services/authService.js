@@ -21,6 +21,15 @@ const authService = {
     return response.data;
   },
 
+  uploadAvatar: async (file) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    const response = await api.post('/auth/me/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
   changePassword: async (data) => {
     const response = await api.put('/auth/change-password', data);
     return response.data;

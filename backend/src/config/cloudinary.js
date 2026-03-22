@@ -74,7 +74,30 @@ const uploadVideo = multer({
   }
 });
 
-module.exports = { cloudinary, uploadImages, uploadVideo };
+// Configuramos almacenamiento para avatares de perfil
+const avatarStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'vigilancia-ciudadana/avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [
+      { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+      { quality: 'auto' }
+    ],
+  },
+});
+
+// Configuración de multer para avatares (1 imagen, 5MB)
+const uploadAvatar = multer({
+  storage: avatarStorage,
+  fileFilter: imageFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB
+    files: 1
+  }
+});
+
+module.exports = { cloudinary, uploadImages, uploadVideo, uploadAvatar };
 
 
 
