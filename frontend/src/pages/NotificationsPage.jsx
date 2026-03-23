@@ -4,6 +4,7 @@ import { HiBell, HiCheckCircle, HiChat, HiHeart, HiUserAdd, HiDocumentAdd, HiTra
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import notificationService from '../services/notificationService';
+import usePushNotifications from '../hooks/usePushNotifications';
 
 const TYPE_CONFIG = {
   new_user:      { icon: HiUserAdd,     bg: 'bg-violet-100', color: 'text-violet-600', dot: 'bg-violet-400' },
@@ -71,6 +72,59 @@ const NotifCard = ({ notif, index, onRead, onDelete }) => {
       >
         <HiTrash className="text-base" />
       </button>
+    </motion.div>
+  );
+};
+
+// ─── Banner de activar push notifications ────────────────────────────────────
+const PushBanner = () => {
+  const { supported, permission, subscribed, loading, subscribe, unsubscribe } = usePushNotifications();
+
+  if (!supported) return null;
+  if (permission === 'denied') return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-4 mb-1 rounded-2xl overflow-hidden"
+      style={{ boxShadow: '0 2px 16px rgba(37,99,235,0.12), 0 0 0 1px rgba(37,99,235,0.08)' }}
+    >
+      <div className="flex items-center gap-3 px-4 py-3.5 bg-white">
+        {/* Ícono */}
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+          style={{ background: subscribed ? 'linear-gradient(135deg, #059669,#047857)' : 'linear-gradient(135deg, #3b82f6,#1d4ed8)' }}>
+          <span className="text-lg">{subscribed ? '🔔' : '🔕'}</span>
+        </div>
+
+        {/* Texto */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-gray-900 leading-tight">
+            {subscribed ? 'Notificaciones activas' : 'Activar notificaciones push'}
+          </p>
+          <p className="text-xs text-gray-400 leading-tight mt-0.5">
+            {subscribed
+              ? 'Te avisamos cuando cambia el estado de tus reportes'
+              : 'Recibe alertas aunque la app esté cerrada'}
+          </p>
+        </div>
+
+        {/* Toggle */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          disabled={loading}
+          onClick={subscribed ? unsubscribe : subscribe}
+          className="flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl transition-all disabled:opacity-50"
+          style={{
+            background: subscribed
+              ? 'rgba(5,150,105,0.1)'
+              : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            color: subscribed ? '#059669' : 'white',
+          }}
+        >
+          {loading ? '...' : subscribed ? 'Desactivar' : 'Activar'}
+        </motion.button>
+      </div>
     </motion.div>
   );
 };
@@ -152,7 +206,12 @@ const NotificationsPage = () => {
       </div>
 
       {/* ── Contenido ── */}
-      <div className="px-4 -mt-1 flex flex-col gap-3">
+      <div className="-mt-1 flex flex-col gap-3">
+
+        {/* Banner push */}
+        <PushBanner />
+
+        <div className="px-4 flex flex-col gap-3">
 
         {/* Skeletons */}
         {isLoading && [1, 2, 3].map(i => (
@@ -225,6 +284,7 @@ const NotificationsPage = () => {
             </p>
           </motion.div>
         )}
+        </div>{/* end inner px-4 div */}
       </div>
     </div>
   );

@@ -25,6 +25,16 @@ const notificationService = {
     const response = await api.delete(`/notifications/${id}`);
     return response.data;
   },
+
+  subscribePush: async (subscription) => {
+    const response = await api.post('/notifications/push/subscribe', { subscription });
+    return response.data;
+  },
+
+  unsubscribePush: async (endpoint) => {
+    const response = await api.post('/notifications/push/unsubscribe', { endpoint });
+    return response.data;
+  },
 };
 
 export default notificationService;

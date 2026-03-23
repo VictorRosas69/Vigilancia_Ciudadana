@@ -24,6 +24,8 @@ import PublicProfilePage from './pages/PublicProfilePage';
 import MessagesPage from './pages/MessagesPage';
 import AdminMessagesPage from './pages/AdminMessagesPage';
 import OnboardingPage from './pages/OnboardingPage';
+import { OfflineBanner } from './components/ui/ErrorScreen';
+import { AnimatePresence } from 'framer-motion';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +58,9 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        {/* Banner global sin conexión */}
+        <AnimatePresence><OfflineBanner /></AnimatePresence>
+
         <Toaster
           position="top-center"
           reverseOrder={false}
