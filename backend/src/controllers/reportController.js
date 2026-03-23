@@ -171,12 +171,37 @@ const updateReport = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'No autorizado' });
     }
 
+    const prevStatus = report.status;
     const updated = await Report.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
 
     res.status(200).json({ success: true, report: updated });
+
+    // Notificar al autor si el estado cambió (y quien actualizó no es el propio autor)
+    if (req.body.status && req.body.status !== prevStatus) {
+      const STATUS_LABELS = {
+        pending:    'Pendiente',
+        verified:   'Verificado',
+        inProgress: 'En progreso',
+        resolved:   'Resuelto ✅',
+        rejected:   'Rechazado',
+      };
+      const newLabel = STATUS_LABELS[req.body.status] || req.body.status;
+      const authorId = report.author.toString();
+      if (authorId !== req.user.id) {
+        createNotification({
+          recipient:    authorId,
+          type:         'status_change',
+          title:        'Estado de tu reporte actualizado',
+          message:      `Tu reporte "${report.title}" ahora está: ${newLabel}`,
+          reportId:     report._id,
+          fromUser:     req.user.id,
+          fromUserName: req.user.name,
+        });
+      }
+    }
   } catch (error) {
     next(error);
   }

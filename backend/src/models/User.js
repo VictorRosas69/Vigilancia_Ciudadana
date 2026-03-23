@@ -85,6 +85,13 @@ const userSchema = new mongoose.Schema(
       showPhone: { type: Boolean, default: false },
     },
 
+    // ─── Push subscriptions (Web Push API) ───────────────────────────────────
+    pushSubscriptions: {
+      type: [Object],
+      default: [],
+      select: false,
+    },
+
     // ─── Token para recuperar contraseña ─────────────────────────────────────
     resetPasswordToken: String,
     resetPasswordExpire: Date,

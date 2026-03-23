@@ -1,4 +1,13 @@
 const Notification = require('../models/Notification');
+const User         = require('../models/User');
+const webpush      = require('web-push');
+
+// ─── Configurar VAPID ─────────────────────────────────────────────────────────
+webpush.setVapidDetails(
+  process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY,
+);
 
 // ─── SSE — registro de clientes activos Map<userId, Set<res>> ─────────────────
 const sseClients = new Map();
@@ -40,12 +49,44 @@ const sseStream = (req, res) => {
   });
 };
 
+// ─── HELPER — enviar Web Push a un usuario ────────────────────────────────────
+const sendPushToUser = async (userId, payload) => {
+  try {
+    const user = await User.findById(userId).select('+pushSubscriptions');
+    if (!user || !user.pushSubscriptions?.length) return;
+    const dead = [];
+    await Promise.all(
+      user.pushSubscriptions.map(async (sub) => {
+        try {
+          await webpush.sendNotification(sub, JSON.stringify(payload));
+        } catch (err) {
+          // 410 Gone = suscripción expirada, limpiar
+          if (err.statusCode === 410 || err.statusCode === 404) dead.push(sub.endpoint);
+        }
+      })
+    );
+    if (dead.length) {
+      await User.findByIdAndUpdate(userId, {
+        $pull: { pushSubscriptions: { endpoint: { $in: dead } } },
+      });
+    }
+  } catch (err) {
+    console.error('⚠️  Error enviando Web Push:', err.message);
+  }
+};
+
 // ─── HELPER — crear notificación sin lanzar error al caller ──────────────────
 const createNotification = async ({ recipient, type, title, message, reportId = null, fromUser = null, fromUserName = '' }) => {
   try {
     const notif = await Notification.create({ recipient, type, title, message, reportId, fromUser, fromUserName });
     // Push en tiempo real al destinatario si tiene conexión SSE abierta
     pushSSE(recipient, 'notification', { _id: notif._id, type, title, message });
+    // Web Push (si tiene suscripción activa)
+    sendPushToUser(recipient, {
+      title,
+      body: message,
+      url: reportId ? `/reports/${reportId}` : '/',
+    });
   } catch (err) {
     console.error('⚠️  Error creando notificación:', err.message);
   }
@@ -107,6 +148,44 @@ const deleteNotification = async (req, res, next) => {
   }
 };
 
+// ─── VAPID PUBLIC KEY ─────────────────────────────────────────────────────────
+const getVapidPublicKey = (req, res) => {
+  res.json({ success: true, publicKey: process.env.VAPID_PUBLIC_KEY });
+};
+
+// ─── SUSCRIBIR PUSH ───────────────────────────────────────────────────────────
+const subscribePush = async (req, res, next) => {
+  try {
+    const { subscription } = req.body;
+    if (!subscription?.endpoint) {
+      return res.status(400).json({ success: false, message: 'Suscripción inválida' });
+    }
+    // Evitar duplicados por endpoint
+    await User.findByIdAndUpdate(req.user.id, {
+      $pull:  { pushSubscriptions: { endpoint: subscription.endpoint } },
+    });
+    await User.findByIdAndUpdate(req.user.id, {
+      $push: { pushSubscriptions: subscription },
+    });
+    res.json({ success: true, message: 'Suscripción guardada' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── DESUSCRIBIR PUSH ─────────────────────────────────────────────────────────
+const unsubscribePush = async (req, res, next) => {
+  try {
+    const { endpoint } = req.body;
+    await User.findByIdAndUpdate(req.user.id, {
+      $pull: { pushSubscriptions: { endpoint } },
+    });
+    res.json({ success: true, message: 'Suscripción eliminada' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createNotification,
   sseStream,
@@ -115,4 +194,7 @@ module.exports = {
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  getVapidPublicKey,
+  subscribePush,
+  unsubscribePush,
 };

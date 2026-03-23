@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { HiSearch, HiBell, HiFire, HiAdjustments } from 'react-icons/hi';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { HiSearch, HiBell, HiFire, HiRefresh } from 'react-icons/hi';
 import reportService from '../services/reportService';
 import notificationService from '../services/notificationService';
 import useAuthStore from '../store/authStore';
 import ReportCard from '../components/ui/ReportCard';
 import ReportCardSkeleton from '../components/ui/ReportCardSkeleton';
+import usePullToRefresh from '../hooks/usePullToRefresh';
+import ErrorScreen from '../components/ui/ErrorScreen';
 
 const PAGE_SIZE = 10;
 
@@ -64,6 +66,7 @@ const HomePage = () => {
   const navigate      = useNavigate();
   const { user }      = useAuthStore();
   const token         = useAuthStore(s => s.token);
+  const queryClient   = useQueryClient();
   const [search, setSearch]           = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -76,8 +79,15 @@ const HomePage = () => {
   });
   const unreadCount = notifData?.count || 0;
 
+  const handlePullRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['reports'] });
+    await queryClient.invalidateQueries({ queryKey: ['notif-count'] });
+  }, [queryClient]);
+
+  const { pullY, refreshing } = usePullToRefresh(handlePullRefresh);
+
   const {
-    data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage, refetch,
+    data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch,
   } = useInfiniteQuery({
     queryKey: ['reports', statusFilter, search],
     queryFn: ({ pageParam = 1 }) => reportService.getAll({
@@ -120,6 +130,27 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50/80 pb-32">
+
+      {/* ── Pull to refresh indicator ── */}
+      <AnimatePresence>
+        {(pullY > 0 || refreshing) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none"
+            style={{ paddingTop: refreshing ? 14 : Math.max(4, pullY / 4) }}
+          >
+            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl text-white text-xs font-semibold"
+              style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', boxShadow: '0 4px 20px rgba(37,99,235,0.4)' }}>
+              <motion.div animate={{ rotate: refreshing ? 360 : pullY * 3.6 }} transition={refreshing ? { repeat: Infinity, duration: 0.7, ease: 'linear' } : {}}>
+                <HiRefresh className="text-base" />
+              </motion.div>
+              {refreshing ? 'Actualizando...' : pullY >= 72 ? 'Suelta para actualizar' : 'Desliza para actualizar'}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ══════════════════════════════════════════
           HEADER — gradiente azul premium
@@ -252,6 +283,11 @@ const HomePage = () => {
               </motion.button>
             )}
           </motion.div>
+        )}
+
+        {/* Pantalla de error */}
+        {isError && !isLoading && (
+          <ErrorScreen onRetry={() => refetch()} />
         )}
 
         {/* Skeletons carga inicial */}
