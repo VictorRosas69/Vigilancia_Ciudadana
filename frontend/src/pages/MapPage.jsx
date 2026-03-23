@@ -36,12 +36,20 @@ const STATUS_CONFIG = {
   rejected:   { dot: 'bg-red-500',    label: 'Rechazado' },
 };
 
-const FILTERS = [
-  { label: 'Todos',   value: '' },
+const PRIORITY_FILTERS = [
+  { label: 'Todas',   value: '' },
   { label: 'Crítica', value: 'critical' },
   { label: 'Alta',    value: 'high' },
   { label: 'Media',   value: 'medium' },
   { label: 'Baja',    value: 'low' },
+];
+
+const STATUS_FILTERS = [
+  { label: 'Todos estados', value: '' },
+  { label: 'Pendiente',     value: 'pending'    },
+  { label: 'En progreso',   value: 'inProgress' },
+  { label: 'Resuelto',      value: 'resolved'   },
+  { label: 'Rechazado',     value: 'rejected'   },
 ];
 
 const makePinIcon = (L, color) =>
@@ -61,6 +69,8 @@ const MapPage = () => {
   const navigate = useNavigate();
   const [MapComponents, setMapComponents] = useState(null);
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [statusFilter, setStatusFilter]     = useState('');
+  const [filterTab, setFilterTab]           = useState('priority'); // 'priority' | 'status'
   const [selected, setSelected] = useState(null);
   const [viewMode, setViewMode] = useState('pins'); // 'pins' | 'heat'
 
@@ -76,9 +86,14 @@ const MapPage = () => {
     r.location.coordinates[1] !== 0
   );
 
-  const filtered = priorityFilter
-    ? reportsWithCoords.filter(r => r.priority === priorityFilter)
-    : reportsWithCoords;
+  const filtered = reportsWithCoords.filter(r => {
+    if (priorityFilter && r.priority !== priorityFilter) return false;
+    if (statusFilter   && r.status   !== statusFilter)   return false;
+    return true;
+  });
+
+  // Clave única para forzar remount del ClusterLayer cuando cambian los filtros
+  const clusterKey = `${priorityFilter}|${statusFilter}`;
 
   const heatPoints = filtered.map(r => [
     r.location.coordinates[1],
@@ -122,31 +137,43 @@ const MapPage = () => {
         const map = useMap();
         useEffect(() => {
           let clusterGroup = null;
+          let cancelled    = false;
+
           const init = async () => {
             await import('leaflet.markercluster');
+            if (cancelled) return; // filtro cambió antes de terminar
+
             const Lx = L.default;
             if (!Lx.markerClusterGroup) return;
+
             clusterGroup = Lx.markerClusterGroup({
               chunkedLoading: true,
               maxClusterRadius: 60,
               showCoverageOnHover: false,
               spiderfyOnMaxZoom: true,
             });
+
             reports.forEach(report => {
-              const lat = report.location.coordinates[1];
-              const lng = report.location.coordinates[0];
+              const lat   = report.location.coordinates[1];
+              const lng   = report.location.coordinates[0];
               const color = PRIORITY_COLORS[report.priority] || PRIORITY_COLORS.medium;
-              const icon = makePinIcon(Lx, color);
+              const icon  = makePinIcon(Lx, color);
               const marker = Lx.marker([lat, lng], { icon });
               marker.on('click', () => onSelect(report));
               clusterGroup.addLayer(marker);
             });
-            map.addLayer(clusterGroup);
+
+            if (!cancelled) map.addLayer(clusterGroup);
           };
+
           init();
-          return () => { if (clusterGroup) map.removeLayer(clusterGroup); };
+
+          return () => {
+            cancelled = true;
+            if (clusterGroup) map.removeLayer(clusterGroup);
+          };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [map, JSON.stringify(reports.map(r => r._id))]);
+        }, [map]); // el key del padre fuerza remount — aquí solo necesitamos [map]
         return null;
       };
 
@@ -187,9 +214,10 @@ const MapPage = () => {
               maxZoom={19}
             />
 
-            {/* Pines con clustering */}
+            {/* Pines con clustering — key fuerza remount al cambiar filtros */}
             {viewMode === 'pins' && filtered.length > 0 && (
               <MapComponents.ClusterLayer
+                key={clusterKey}
                 reports={filtered}
                 onSelect={report => setSelected(report)}
               />
@@ -219,7 +247,11 @@ const MapPage = () => {
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-extrabold text-gray-900">Mapa de Reportes</h1>
             <p className="text-gray-400 text-xs">
-              {filtered.length} reporte{filtered.length !== 1 ? 's' : ''} · {cityName}
+              {filtered.length} reporte{filtered.length !== 1 ? 's' : ''}
+              {(priorityFilter || statusFilter) && (
+                <span className="text-blue-500 font-semibold"> · filtrado</span>
+              )}
+              {' · '}{cityName}
             </p>
           </div>
 
@@ -246,26 +278,70 @@ const MapPage = () => {
           </div>
         </div>
 
-        {/* Filtros pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pointer-events-auto pb-1">
-          {FILTERS.map((f) => {
-            const cfg = f.value ? PRIORITY_CONFIG[f.value] : null;
-            const isActive = priorityFilter === f.value;
-            return (
+        {/* Filtros — tabs prioridad / estado */}
+        <div className="pointer-events-auto flex flex-col gap-1.5">
+          {/* Selector de tipo de filtro */}
+          <div className="flex gap-1.5 bg-white/90 backdrop-blur-xl rounded-xl p-1 shadow"
+            style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
+            {[
+              { id: 'priority', label: '🎯 Prioridad' },
+              { id: 'status',   label: '📋 Estado'    },
+            ].map(t => (
               <button
-                key={f.value}
-                onClick={() => setPriorityFilter(f.value)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
-                  isActive
-                    ? 'bg-white text-gray-900 shadow-md border border-gray-100'
-                    : 'bg-white/85 backdrop-blur-md text-gray-500 border border-white/60 shadow-sm'
+                key={t.id}
+                onClick={() => setFilterTab(t.id)}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  filterTab === t.id
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-500'
                 }`}
               >
-                {cfg && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />}
-                {f.label}
+                {t.label}
               </button>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Pills del filtro activo */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            {filterTab === 'priority'
+              ? PRIORITY_FILTERS.map((f) => {
+                  const cfg = f.value ? PRIORITY_CONFIG[f.value] : null;
+                  const isActive = priorityFilter === f.value;
+                  return (
+                    <button
+                      key={f.value}
+                      onClick={() => { setPriorityFilter(f.value); setSelected(null); }}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        isActive
+                          ? 'bg-white text-gray-900 shadow-md border border-gray-100'
+                          : 'bg-white/85 backdrop-blur-md text-gray-500 border border-white/60 shadow-sm'
+                      }`}
+                    >
+                      {cfg && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />}
+                      {f.label}
+                    </button>
+                  );
+                })
+              : STATUS_FILTERS.map((f) => {
+                  const cfg = f.value ? STATUS_CONFIG[f.value] : null;
+                  const isActive = statusFilter === f.value;
+                  return (
+                    <button
+                      key={f.value}
+                      onClick={() => { setStatusFilter(f.value); setSelected(null); }}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        isActive
+                          ? 'bg-white text-gray-900 shadow-md border border-gray-100'
+                          : 'bg-white/85 backdrop-blur-md text-gray-500 border border-white/60 shadow-sm'
+                      }`}
+                    >
+                      {cfg && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />}
+                      {f.label}
+                    </button>
+                  );
+                })
+            }
+          </div>
         </div>
 
         {/* Leyenda heatmap */}
