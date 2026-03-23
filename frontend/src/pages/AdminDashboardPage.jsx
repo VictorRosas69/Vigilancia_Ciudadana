@@ -474,28 +474,29 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Toolbar */}
+      <div className="bg-white rounded-2xl p-4 flex flex-wrap items-center gap-3" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
         <div className="relative flex-1 min-w-[200px]">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{Icons.search}</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">{Icons.search}</span>
           <input
             type="text"
             placeholder="Buscar por título o descripción..."
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50 focus:bg-white transition-colors"
           />
         </div>
         <select
           value={filterStatus}
           onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white text-gray-700"
+          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50 text-gray-700 font-medium"
         >
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_MAP).map(([val, { label }]) => (
             <option key={val} value={val}>{label}</option>
           ))}
         </select>
-        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1"><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Cargando...</span>}
+        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Actualizando...</span>}
         <button
           onClick={async () => {
             setExporting(true);
@@ -510,7 +511,8 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
             }
           }}
           disabled={exporting}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 shadow-sm shadow-blue-200 ml-auto"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold transition-all disabled:opacity-60 ml-auto"
+          style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', boxShadow: '0 4px 12px rgba(37,99,235,0.3)' }}
         >
           {exporting
             ? <><span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />Generando...</>
@@ -519,60 +521,93 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Tabla */}
+      <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide">Reporte</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Autor</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide hidden lg:table-cell">Ubicación</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide">Prioridad</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide">Estado</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide hidden lg:table-cell">Fecha</th>
-              <th className="px-5 py-3.5" />
+            <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Reporte</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden md:table-cell">Autor</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden lg:table-cell">Ubicación</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Prioridad</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Estado</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden lg:table-cell">Fecha</th>
+              <th className="px-5 py-4 bg-gray-50/80" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {isLoading && Array.from({length: 8}).map((_, i) => (
-              <tr key={i}><td colSpan={7} className="px-5 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
+          <tbody>
+            {isLoading && Array.from({length: 6}).map((_, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid #f8fafc' }}>
+                <td colSpan={7} className="px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 animate-pulse flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3.5 bg-gray-100 rounded-lg animate-pulse w-2/3" />
+                      <div className="h-3 bg-gray-100 rounded-lg animate-pulse w-1/3" />
+                    </div>
+                  </div>
+                </td>
+              </tr>
             ))}
             {!isLoading && reports.length === 0 && (
-              <tr><td colSpan={7} className="px-5 py-14 text-center text-gray-400 text-sm">No se encontraron reportes</td></tr>
+              <tr><td colSpan={7} className="px-5 py-16 text-center">
+                <div className="text-4xl mb-3">🔍</div>
+                <p className="text-gray-500 font-semibold">No se encontraron reportes</p>
+                <p className="text-gray-400 text-xs mt-1">Intenta con otro filtro o búsqueda</p>
+              </td></tr>
             )}
-            {!isLoading && reports.map(report => {
+            {!isLoading && reports.map((report, idx) => {
               const priority = PRIORITY_MAP[report.priority] || PRIORITY_MAP.medium;
               const status = STATUS_MAP[report.status] || STATUS_MAP.pending;
               return (
-                <tr key={report._id} className="hover:bg-gray-50/70 transition-colors">
-                  <td className="px-5 py-3.5">
+                <tr key={report._id} className="group transition-colors" style={{ borderBottom: '1px solid #f8fafc', background: idx % 2 === 0 ? 'white' : '#fafbfc' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f0f9ff'}
+                  onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'white' : '#fafbfc'}
+                >
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       {report.images?.length > 0
-                        ? <img src={report.images[0].url} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
-                        : <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">{WORK_ICONS[report.workType] || '📋'}</div>
+                        ? <img src={report.images[0].url} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
+                        : <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">{WORK_ICONS[report.workType] || '📋'}</div>
                       }
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-800 truncate max-w-[180px]">{report.title}</p>
-                        <p className="text-xs text-gray-400 truncate max-w-[180px]">{report.description}</p>
+                        <p className="font-semibold text-gray-900 truncate max-w-[200px] text-[13px]">{report.title}</p>
+                        <p className="text-xs text-gray-400 truncate max-w-[200px] mt-0.5">{report.description}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 hidden md:table-cell"><span className="text-gray-600 text-sm">{report.author?.name || 'Anónimo'}</span></td>
-                  <td className="px-5 py-3.5 hidden lg:table-cell"><span className="text-gray-500 text-xs">{report.location?.neighborhood || report.location?.city || '—'}</span></td>
-                  <td className="px-5 py-3.5"><span className={`text-xs px-2.5 py-1 rounded-lg font-bold ${priority.cls}`}>{priority.label}</span></td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-5 py-4 hidden md:table-cell">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 overflow-hidden">
+                        {report.author?.avatar?.url
+                          ? <img src={report.author.avatar.url} alt="" className="w-full h-full object-cover" />
+                          : report.author?.name?.charAt(0) || '?'}
+                      </div>
+                      <span className="text-gray-700 text-sm font-medium">{report.author?.name || 'Anónimo'}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 hidden lg:table-cell">
+                    <span className="text-gray-500 text-xs bg-gray-50 px-2 py-1 rounded-lg">{report.location?.neighborhood || report.location?.city || '—'}</span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className={`text-xs px-2.5 py-1.5 rounded-xl font-bold ${priority.cls}`}>{priority.label}</span>
+                  </td>
+                  <td className="px-5 py-4">
                     <select
                       value={report.status}
                       onChange={e => handleStatusChange(report._id, e.target.value)}
-                      className={`text-xs px-2.5 py-1.5 rounded-lg font-semibold border cursor-pointer focus:outline-none ${status.cls}`}
+                      className={`text-xs px-2.5 py-1.5 rounded-xl font-semibold border cursor-pointer focus:outline-none ${status.cls}`}
                     >
                       {Object.entries(STATUS_MAP).map(([val, { label }]) => <option key={val} value={val}>{label}</option>)}
                     </select>
                   </td>
-                  <td className="px-5 py-3.5 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmt(report.createdAt)}</span></td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-1.5 justify-end">
-                      <button onClick={() => onViewReport(report._id)} title="Ver detalle" className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">{Icons.eye}</button>
-                      <button onClick={() => handleDelete(report._id)} title="Eliminar" className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">{Icons.trash}</button>
+                  <td className="px-5 py-4 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmt(report.createdAt)}</span></td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-1 justify-end">
+                      <button onClick={() => onViewReport(report._id)} title="Ver detalle"
+                        className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">{Icons.eye}</button>
+                      <button onClick={() => handleDelete(report._id)} title="Eliminar"
+                        className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">{Icons.trash}</button>
                     </div>
                   </td>
                 </tr>
@@ -582,12 +617,14 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
         </table>
 
         {pagination.pages > 1 && (
-          <div className="px-5 py-3 border-t border-gray-50 flex items-center justify-between">
-            <span className="text-xs text-gray-400">Mostrando {reports.length} de {pagination.total} reportes</span>
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderTop: '1px solid #f1f5f9' }}>
+            <span className="text-xs text-gray-400 font-medium">{reports.length} de {pagination.total} reportes</span>
             <div className="flex gap-1.5">
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Anterior</button>
-              <span className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-semibold">{page}</span>
-              <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Siguiente</button>
+              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+                className="px-3.5 py-1.5 text-xs rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium">← Anterior</button>
+              <span className="px-3.5 py-1.5 text-xs rounded-xl text-white font-bold" style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>{page}</span>
+              <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}
+                className="px-3.5 py-1.5 text-xs rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium">Siguiente →</button>
             </div>
           </div>
         )}
@@ -631,69 +668,95 @@ const UsersTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Toolbar */}
+      <div className="bg-white rounded-2xl p-4 flex flex-wrap items-center gap-3" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
         <div className="relative flex-1 min-w-[200px]">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{Icons.search}</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">{Icons.search}</span>
           <input type="text" placeholder="Buscar por nombre, email o ciudad..." value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50 focus:bg-white transition-colors"
           />
         </div>
         <select value={filterRole} onChange={e => { setFilterRole(e.target.value); setPage(1); }}
-          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white text-gray-700"
+          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50 text-gray-700 font-medium"
         >
           <option value="">Todos los roles</option>
           <option value="citizen">Ciudadano</option>
           <option value="moderator">Moderador</option>
           <option value="admin">Admin</option>
         </select>
-        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1"><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Cargando...</span>}
+        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Actualizando...</span>}
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* Tabla */}
+      <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide">Usuario</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Email</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide hidden lg:table-cell">Ciudad</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide">Rol</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide hidden md:table-cell">Reportes</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide">Activo</th>
-              <th className="text-left px-5 py-3.5 font-semibold text-gray-500 text-xs uppercase tracking-wide hidden lg:table-cell">Registro</th>
-              <th className="px-5 py-3.5" />
+            <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Usuario</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden md:table-cell">Email</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden lg:table-cell">Ciudad</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Rol</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden md:table-cell">Reportes</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Activo</th>
+              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden lg:table-cell">Registro</th>
+              <th className="px-5 py-4 bg-gray-50/80" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {isLoading && Array.from({length: 8}).map((_, i) => (
-              <tr key={i}><td colSpan={8} className="px-5 py-3"><div className="h-4 bg-gray-100 rounded animate-pulse" /></td></tr>
+          <tbody>
+            {isLoading && Array.from({length: 6}).map((_, i) => (
+              <tr key={i} style={{ borderBottom: '1px solid #f8fafc' }}>
+                <td colSpan={8} className="px-5 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3.5 bg-gray-100 rounded-lg animate-pulse w-1/3" />
+                      <div className="h-3 bg-gray-100 rounded-lg animate-pulse w-1/4" />
+                    </div>
+                  </div>
+                </td>
+              </tr>
             ))}
             {!isLoading && users.length === 0 && (
-              <tr><td colSpan={8} className="px-5 py-14 text-center text-gray-400 text-sm">No se encontraron usuarios</td></tr>
+              <tr><td colSpan={8} className="px-5 py-16 text-center">
+                <div className="text-4xl mb-3">👥</div>
+                <p className="text-gray-500 font-semibold">No se encontraron usuarios</p>
+              </td></tr>
             )}
-            {!isLoading && users.map(user => {
+            {!isLoading && users.map((user, idx) => {
               const role = ROLE_MAP[user.role] || ROLE_MAP.citizen;
               const isAdmin = user.role === 'admin';
               const toggling = toggleMutation.isPending && toggleMutation.variables === user._id;
               return (
-                <tr key={user._id} className="hover:bg-gray-50/70 transition-colors">
-                  <td className="px-5 py-3.5">
+                <tr key={user._id} style={{ borderBottom: '1px solid #f8fafc', background: idx % 2 === 0 ? 'white' : '#fafbfc' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f0f9ff'}
+                  onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'white' : '#fafbfc'}
+                >
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0 uppercase">
-                        {user.name?.charAt(0) || '?'}
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 overflow-hidden"
+                        style={{ background: user.avatar?.url ? 'transparent' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: 'white', boxShadow: '0 2px 6px rgba(37,99,235,0.2)' }}>
+                        {user.avatar?.url
+                          ? <img src={user.avatar.url} alt={user.name} className="w-full h-full object-cover" />
+                          : user.name?.charAt(0)?.toUpperCase() || '?'}
                       </div>
-                      <span className="font-semibold text-gray-800 truncate max-w-[140px]">{user.name}</span>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-[13px]">{user.name}</p>
+                        {isAdmin && <p className="text-[10px] text-blue-500 font-bold">Administrador</p>}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 hidden md:table-cell"><span className="text-gray-500 text-xs">{user.email}</span></td>
-                  <td className="px-5 py-3.5 hidden lg:table-cell"><span className="text-gray-500 text-xs">{user.city || '—'}</span></td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-5 py-4 hidden md:table-cell"><span className="text-gray-500 text-xs">{user.email}</span></td>
+                  <td className="px-5 py-4 hidden lg:table-cell">
+                    <span className="text-gray-500 text-xs bg-gray-50 px-2 py-1 rounded-lg">{user.city || '—'}</span>
+                  </td>
+                  <td className="px-5 py-4">
                     {isAdmin ? (
-                      <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold border ${role.cls}`}>{role.label}</span>
+                      <span className={`text-xs px-2.5 py-1.5 rounded-xl font-semibold border ${role.cls}`}>{role.label}</span>
                     ) : (
                       <select value={user.role} onChange={e => roleMutation.mutate({ userId: user._id, role: e.target.value })}
                         disabled={roleMutation.isPending}
-                        className={`text-xs px-2.5 py-1.5 rounded-lg font-semibold border cursor-pointer focus:outline-none ${role.cls}`}
+                        className={`text-xs px-2.5 py-1.5 rounded-xl font-semibold border cursor-pointer focus:outline-none ${role.cls}`}
                       >
                         <option value="citizen">Ciudadano</option>
                         <option value="moderator">Moderador</option>
@@ -701,26 +764,25 @@ const UsersTab = () => {
                       </select>
                     )}
                   </td>
-                  <td className="px-5 py-3.5 hidden md:table-cell"><span className="text-gray-700 font-semibold">{user.reportsCount ?? 0}</span></td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-5 py-4 hidden md:table-cell">
+                    <span className="font-bold text-gray-800 text-sm">{user.reportsCount ?? 0}</span>
+                  </td>
+                  <td className="px-5 py-4">
                     {isAdmin ? <span className="text-xs text-gray-300">—</span> : (
-                      <button
-                        onClick={() => toggleMutation.mutate(user._id)}
-                        disabled={toggling}
+                      <button onClick={() => toggleMutation.mutate(user._id)} disabled={toggling}
                         title={user.isActive ? 'Desactivar' : 'Activar'}
-                        className={`relative inline-flex items-center h-5 w-9 rounded-full transition-colors focus:outline-none ${user.isActive ? 'bg-green-400' : 'bg-gray-200'} ${toggling ? 'opacity-50' : ''}`}
+                        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-all focus:outline-none ${user.isActive ? 'bg-green-400' : 'bg-gray-200'} ${toggling ? 'opacity-50' : ''}`}
+                        style={user.isActive ? { boxShadow: '0 2px 6px rgba(34,197,94,0.4)' } : {}}
                       >
-                        <span className={`inline-block w-3.5 h-3.5 bg-white rounded-full shadow transform transition-transform ${user.isActive ? 'translate-x-4' : 'translate-x-1'}`} />
+                        <span className={`inline-block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform ${user.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                       </button>
                     )}
                   </td>
-                  <td className="px-5 py-3.5 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmt(user.createdAt)}</span></td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-5 py-4 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmt(user.createdAt)}</span></td>
+                  <td className="px-5 py-4">
                     {!isAdmin && (
-                      <button
-                        onClick={() => { if (!window.confirm(`¿Eliminar a "${user.name}"?`)) return; deleteMutation.mutate(user._id); }}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      >
+                      <button onClick={() => { if (!window.confirm(`¿Eliminar a "${user.name}"?`)) return; deleteMutation.mutate(user._id); }}
+                        className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                         {Icons.trash}
                       </button>
                     )}
@@ -732,12 +794,14 @@ const UsersTab = () => {
         </table>
 
         {pagination.pages > 1 && (
-          <div className="px-5 py-3 border-t border-gray-50 flex items-center justify-between">
-            <span className="text-xs text-gray-400">Mostrando {users.length} de {pagination.total} usuarios</span>
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderTop: '1px solid #f1f5f9' }}>
+            <span className="text-xs text-gray-400 font-medium">{users.length} de {pagination.total} usuarios</span>
             <div className="flex gap-1.5">
-              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Anterior</button>
-              <span className="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-semibold">{page}</span>
-              <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Siguiente</button>
+              <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+                className="px-3.5 py-1.5 text-xs rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium">← Anterior</button>
+              <span className="px-3.5 py-1.5 text-xs rounded-xl text-white font-bold" style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)' }}>{page}</span>
+              <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}
+                className="px-3.5 py-1.5 text-xs rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed font-medium">Siguiente →</button>
             </div>
           </div>
         )}
@@ -953,46 +1017,52 @@ const PetitionsTab = () => {
       {!isLoading && petitions.map(petition => {
         const pct = Math.min(Math.round((petition.signaturesCount / petition.goal) * 100), 100);
         return (
-          <div key={petition._id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs px-2 py-0.5 rounded-lg font-semibold border ${petition.isOpen ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
-                    {petition.isOpen ? 'Abierta' : 'Cerrada'}
-                  </span>
-                  <span className="text-xs text-gray-400">{fmt(petition.createdAt)}</span>
+          <div key={petition._id} className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+            {/* Barra de color superior */}
+            <div className="h-1 w-full" style={{ background: petition.isOpen ? 'linear-gradient(90deg, #22c55e, #16a34a)' : '#e2e8f0' }} />
+            <div className="p-5">
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold ${petition.isOpen ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {petition.isOpen ? '● Abierta' : '● Cerrada'}
+                    </span>
+                    <span className="text-xs text-gray-400">{fmt(petition.createdAt)}</span>
+                  </div>
+                  <h3 className="font-extrabold text-gray-900 text-[15px] leading-snug mb-1">{petition.title}</h3>
+                  <p className="text-xs text-gray-400">Para: <span className="font-medium text-gray-600">{petition.recipientTitle}</span> · {petition.city}</p>
                 </div>
-                <h3 className="font-extrabold text-gray-800 text-base leading-snug">{petition.title}</h3>
-                <p className="text-xs text-gray-500 mt-1">Para: {petition.recipientTitle} · {petition.city}</p>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button onClick={() => openEdit(petition)} title="Editar"
+                    className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">{Icons.pen}</button>
+                  <button onClick={() => handleExportWord(petition._id)} disabled={exportingId === petition._id} title="Exportar Word"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-semibold text-xs transition-colors disabled:opacity-60"
+                    style={{ background: 'rgba(37,99,235,0.08)', color: '#2563eb' }}
+                  >
+                    {exportingId === petition._id
+                      ? <span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                      : Icons.word}
+                    Word
+                  </button>
+                  <button onClick={() => { if (window.confirm('¿Eliminar esta petición?')) deleteMutation.mutate(petition._id); }} title="Eliminar"
+                    className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">{Icons.trash}</button>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button onClick={() => openEdit(petition)} title="Editar" className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">{Icons.pen}</button>
-                <button
-                  onClick={() => handleExportWord(petition._id)}
-                  disabled={exportingId === petition._id}
-                  title="Exportar Word"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold text-xs transition-colors disabled:opacity-60"
-                >
-                  {exportingId === petition._id
-                    ? <span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                    : Icons.word
-                  }
-                  Word
-                </button>
-                <button onClick={() => { if (window.confirm('¿Eliminar esta petición?')) deleteMutation.mutate(petition._id); }} title="Eliminar" className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">{Icons.trash}</button>
-              </div>
-            </div>
 
-            {/* Barra de progreso de firmas */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-gray-600">{petition.signaturesCount} firmas</span>
-                <span className="text-xs text-gray-400">Meta: {petition.goal}</span>
+              {/* Progreso de firmas */}
+              <div className="bg-gray-50 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-extrabold text-gray-900 leading-none">{petition.signaturesCount}</span>
+                    <span className="text-xs text-gray-400 font-medium">firmas</span>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-500">Meta: {petition.goal} · <span className="text-blue-600">{pct}%</span></span>
+                </div>
+                <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, background: pct >= 100 ? 'linear-gradient(90deg, #22c55e, #16a34a)' : 'linear-gradient(90deg, #3b82f6, #1d4ed8)' }} />
+                </div>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
-              </div>
-              <p className="text-xs text-gray-400 mt-1 text-right">{pct}% completado</p>
             </div>
           </div>
         );
