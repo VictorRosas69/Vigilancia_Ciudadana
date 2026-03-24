@@ -425,6 +425,85 @@ const ProfilePage = () => {
           )}
         </div>
 
+        {/* ── Logros y badges ── */}
+        {(() => {
+          const BADGES = [
+            { icon: '🌱', label: 'Primer reporte',    desc: 'Publicaste tu primer reporte',  earned: stats.total >= 1  },
+            { icon: '🔥', label: 'Ciudadano activo',  desc: '5 reportes publicados',          earned: stats.total >= 5  },
+            { icon: '💪', label: 'Comprometido',      desc: '10 reportes publicados',         earned: stats.total >= 10 },
+            { icon: '🏆', label: 'Héroe ciudadano',   desc: '20 reportes publicados',         earned: stats.total >= 20 },
+            { icon: '✅', label: 'Efectivo',           desc: 'Un reporte fue resuelto',        earned: stats.resolved >= 1  },
+            { icon: '🎯', label: 'Alto impacto',      desc: '5 reportes resueltos',           earned: stats.resolved >= 5  },
+            { icon: '⭐', label: 'Veterano',           desc: '15 reportes publicados',         earned: stats.total >= 15 },
+            { icon: '🎉', label: 'Gran resolución',   desc: '10 reportes resueltos',          earned: stats.resolved >= 10 },
+          ];
+          const earned = BADGES.filter(b => b.earned);
+          const locked = BADGES.filter(b => !b.earned);
+          return (
+            <div className="bg-white rounded-3xl p-5"
+              style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                  🏅 Logros
+                </h2>
+                <span className="text-xs text-gray-400 font-semibold bg-gray-50 px-2.5 py-1 rounded-full">
+                  {earned.length}/{BADGES.length}
+                </span>
+              </div>
+
+              {earned.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-3xl mb-2">🔒</p>
+                  <p className="text-sm text-gray-400 font-medium">Crea reportes para desbloquear logros</p>
+                </div>
+              ) : (
+                <>
+                  {/* Obtenidos */}
+                  <div className="grid grid-cols-4 gap-3 mb-4">
+                    {earned.map((b, i) => (
+                      <motion.div
+                        key={b.label}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.06, type: 'spring', stiffness: 300 }}
+                        className="flex flex-col items-center gap-1"
+                        title={b.desc}
+                      >
+                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl"
+                          style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '2px solid #bfdbfe' }}>
+                          {b.icon}
+                        </div>
+                        <p className="text-[10px] text-gray-600 font-bold text-center leading-tight">{b.label}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Próximos por desbloquear */}
+                  {locked.length > 0 && (
+                    <>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Por desbloquear</p>
+                      <div className="flex flex-col gap-2">
+                        {locked.slice(0, 3).map((b) => (
+                          <div key={b.label} className="flex items-center gap-3 py-2 px-3 rounded-2xl bg-gray-50">
+                            <div className="w-9 h-9 rounded-xl bg-gray-200 flex items-center justify-center text-lg opacity-40 flex-shrink-0">
+                              {b.icon}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-gray-500">{b.label}</p>
+                              <p className="text-[11px] text-gray-400">{b.desc}</p>
+                            </div>
+                            <span className="text-gray-300 text-base flex-shrink-0">🔒</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })()}
+
         {/* ── Accesos rápidos ── */}
         <div className="flex flex-col gap-2.5">
 

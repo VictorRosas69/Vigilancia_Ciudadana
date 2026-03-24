@@ -300,13 +300,19 @@ const CreateReportPage = () => {
 
           {/* Título */}
           <div>
-            <label className="text-sm font-medium text-gray-800 mb-2 block">
-              Título del reporte <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-800">
+                Título del reporte <span className="text-red-500">*</span>
+              </label>
+              <span className={`text-xs font-semibold tabular-nums ${form.title.length > 90 ? 'text-red-400' : form.title.length > 70 ? 'text-orange-400' : 'text-gray-400'}`}>
+                {form.title.length}/100
+              </span>
+            </div>
             <input
               name="title"
               value={form.title}
               onChange={handleChange}
+              maxLength={100}
               placeholder="Ej: Vía destruida en la Carrera 15"
               className={inputClass}
             />
@@ -314,13 +320,19 @@ const CreateReportPage = () => {
 
           {/* Descripción */}
           <div>
-            <label className="text-sm font-medium text-gray-800 mb-2 block">
-              Descripción detallada <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-800">
+                Descripción detallada <span className="text-red-500">*</span>
+              </label>
+              <span className={`text-xs font-semibold tabular-nums ${form.description.length > 1800 ? 'text-red-400' : form.description.length > 1400 ? 'text-orange-400' : 'text-gray-400'}`}>
+                {form.description.length}/2000
+              </span>
+            </div>
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
+              maxLength={2000}
               placeholder="Describe el problema con el mayor detalle posible..."
               rows={4}
               className={`${inputClass} resize-none`}
