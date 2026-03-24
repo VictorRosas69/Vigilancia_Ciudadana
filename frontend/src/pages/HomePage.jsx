@@ -108,6 +108,12 @@ const HomePage = () => {
   const firstName    = user?.name?.split(' ')[0] || 'Usuario';
   const avatarGradient = getAvatarGradient(user?.name);
 
+  // Debounce: busca automáticamente 500ms después de que el usuario deja de escribir
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput), 500);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     setSearch(searchInput);
@@ -210,7 +216,7 @@ const HomePage = () => {
             </button>
           </div>
 
-          {/* Barra de búsqueda */}
+          {/* Barra de búsqueda con debounce */}
           <form onSubmit={handleSearch} className="relative mb-4">
             <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg z-10" />
             <input
@@ -218,9 +224,18 @@ const HomePage = () => {
               placeholder="Buscar reportes..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full bg-white rounded-2xl pl-11 pr-4 py-3.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-base"
+              className="w-full bg-white rounded-2xl pl-11 pr-10 py-3.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-base"
               style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
             />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => { setSearchInput(''); setSearch(''); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center"
+              >
+                <span className="text-gray-500 text-xs font-bold leading-none">✕</span>
+              </button>
+            )}
           </form>
 
           {/* Filtros dentro del header */}

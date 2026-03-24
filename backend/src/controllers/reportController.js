@@ -39,6 +39,7 @@ const createReport = async (req, res, next) => {
       location,
       images,
       author: req.user.id,
+      statusHistory: [{ status: 'pending', changedAt: new Date(), changedBy: req.user.id }],
     });
 
     await User.findByIdAndUpdate(req.user.id, {
@@ -138,7 +139,8 @@ const getReportById = async (req, res, next) => {
   try {
     const report = await Report.findById(req.params.id)
       .populate('author', 'name avatar city')
-      .populate('verifiedBy', 'name');
+      .populate('verifiedBy', 'name avatar')
+      .populate('statusHistory.changedBy', 'name avatar role');
 
     if (!report) {
       return res.status(404).json({
@@ -300,6 +302,7 @@ const updateStatus = async (req, res, next) => {
 
     const update = {
       status,
+      $push: { statusHistory: { status, changedAt: new Date(), changedBy: req.user.id } },
       ...(status === 'verified' && { verifiedBy: req.user.id, verifiedAt: new Date() }),
       ...(status === 'rejected' && rejectionReason && { rejectionReason }),
     };
