@@ -140,6 +140,17 @@ const reportSchema = new mongoose.Schema(
             ref: 'User',
         }],
 
+        // ─── Historial de estados ─────────────────────────────────────────────────
+        statusHistory: [{
+            status: {
+                type: String,
+                enum: ['pending', 'verified', 'inProgress', 'resolved', 'rejected', 'closed'],
+            },
+            changedAt: { type: Date, default: Date.now },
+            changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+            note: { type: String, default: '' },
+        }],
+
         // ─── Visibilidad ──────────────────────────────────────────────────────────
         isActive: { type: Boolean, default: true },
         isPublic: { type: Boolean, default: true },

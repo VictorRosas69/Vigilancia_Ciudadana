@@ -224,18 +224,41 @@ const ProfilePage = () => {
           {/* Stats en header */}
           <div className="grid grid-cols-4 gap-2 mt-6">
             {[
-              { label: 'Total',      value: stats.total,      color: 'rgba(255,255,255,0.15)' },
-              { label: 'Resueltos',  value: stats.resolved,   color: 'rgba(52,211,153,0.25)' },
-              { label: 'En curso',   value: stats.inProgress, color: 'rgba(167,139,250,0.25)' },
-              { label: 'Pendientes', value: stats.pending,    color: 'rgba(251,146,60,0.25)' },
+              { label: 'Total',      value: stats.total,      color: 'rgba(255,255,255,0.15)', icon: '📊' },
+              { label: 'Resueltos',  value: stats.resolved,   color: 'rgba(52,211,153,0.25)',  icon: '✅' },
+              { label: 'En curso',   value: stats.inProgress, color: 'rgba(167,139,250,0.25)', icon: '🔧' },
+              { label: 'Pendientes', value: stats.pending,    color: 'rgba(251,146,60,0.25)',  icon: '⏳' },
             ].map(s => (
               <div key={s.label} className="rounded-2xl p-2.5 text-center"
                 style={{ background: s.color, border: '1px solid rgba(255,255,255,0.12)' }}>
-                <p className="text-white text-xl font-extrabold leading-none">{s.value}</p>
+                <p className="text-base leading-none mb-0.5">{s.icon}</p>
+                <p className="text-white text-lg font-extrabold leading-none">{s.value}</p>
                 <p className="text-white/60 text-[10px] mt-0.5 font-semibold leading-tight">{s.label}</p>
               </div>
             ))}
           </div>
+
+          {/* Barra de tasa de resolución */}
+          {stats.total > 0 && (
+            <div className="mt-4 rounded-2xl p-3"
+              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/70 text-xs font-semibold">Tasa de resolución</span>
+                <span className="text-white text-xs font-extrabold">
+                  {Math.round((stats.resolved / stats.total) * 100)}%
+                </span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.round((stats.resolved / stats.total) * 100)}%` }}
+                  transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+                  className="h-full rounded-full"
+                  style={{ background: 'linear-gradient(90deg, #34d399, #10b981)' }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />

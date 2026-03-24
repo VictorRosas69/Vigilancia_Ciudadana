@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { HiArrowLeft, HiLocationMarker, HiHeart, HiChatAlt, HiEye, HiTrash, HiPaperAirplane, HiShare, HiDotsVertical, HiPencil } from 'react-icons/hi';
+import { HiArrowLeft, HiLocationMarker, HiHeart, HiChatAlt, HiEye, HiTrash, HiPaperAirplane, HiShare, HiDotsVertical, HiPencil, HiClipboardList, HiShieldCheck } from 'react-icons/hi';
 import reportService from '../services/reportService';
 import commentService from '../services/commentService';
 import useAuthStore from '../store/authStore';
@@ -205,14 +205,64 @@ const ReportDetailPage = () => {
   };
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
-      <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+    <div className="min-h-screen pb-48" style={{ background: '#f8fafc' }}>
+      {/* Hero skeleton */}
+      <div className="h-72 bg-gray-200 animate-pulse relative">
+        <div className="absolute top-12 left-4 w-10 h-10 bg-white/30 rounded-2xl" />
+        <div className="absolute top-12 right-4 w-10 h-10 bg-white/30 rounded-2xl" />
+      </div>
+      <div className="px-4 py-5 flex flex-col gap-4">
+        {/* Info card skeleton */}
+        <div className="bg-white rounded-3xl p-5" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+          <div className="flex justify-between mb-4">
+            <div className="h-6 w-24 bg-gray-100 rounded-xl animate-pulse" />
+            <div className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />
+          </div>
+          <div className="h-7 w-3/4 bg-gray-100 rounded-xl animate-pulse mb-2" />
+          <div className="h-5 w-1/2 bg-gray-100 rounded-xl animate-pulse mb-4" />
+          <div className="h-4 w-full bg-gray-50 rounded-xl animate-pulse mb-2" />
+          <div className="h-4 w-5/6 bg-gray-50 rounded-xl animate-pulse mb-2" />
+          <div className="h-4 w-4/6 bg-gray-50 rounded-xl animate-pulse mb-4" />
+          <div className="flex items-center gap-3 pt-3 border-t border-gray-50">
+            <div className="w-10 h-10 bg-gray-100 rounded-full animate-pulse" />
+            <div>
+              <div className="h-4 w-28 bg-gray-100 rounded-xl animate-pulse mb-1" />
+              <div className="h-3 w-20 bg-gray-50 rounded-xl animate-pulse" />
+            </div>
+          </div>
+        </div>
+        {/* Location skeleton */}
+        <div className="bg-white rounded-3xl px-5 py-4 flex gap-3 items-center" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+          <div className="w-10 h-10 bg-gray-100 rounded-2xl animate-pulse flex-shrink-0" />
+          <div className="h-4 w-2/3 bg-gray-100 rounded-xl animate-pulse" />
+        </div>
+        {/* Timeline skeleton */}
+        <div className="bg-white rounded-3xl p-5" style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}>
+          <div className="h-4 w-32 bg-gray-100 rounded-xl animate-pulse mb-4" />
+          {[0,1,2].map(i => (
+            <div key={i} className="flex gap-3 mb-4">
+              <div className="w-8 h-8 bg-gray-100 rounded-full animate-pulse flex-shrink-0" />
+              <div className="flex-1">
+                <div className="h-4 w-24 bg-gray-100 rounded-xl animate-pulse mb-1" />
+                <div className="h-3 w-16 bg-gray-50 rounded-xl animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 
   if (!report) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
-      <p className="text-gray-500">Reporte no encontrado</p>
+      <div className="flex flex-col items-center gap-4 px-6 text-center">
+        <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
+          style={{ background: 'linear-gradient(135deg, #fee2e2, #fecaca)' }}>
+          🔍
+        </div>
+        <h2 className="text-lg font-extrabold text-gray-900">Reporte no encontrado</h2>
+        <p className="text-sm text-gray-400">Es posible que haya sido eliminado o no exista.</p>
+      </div>
     </div>
   );
 
@@ -504,6 +554,106 @@ const ReportDetailPage = () => {
             <MapSection coordinates={report.location.coordinates} />
           </div>
         )}
+
+        {/* ── Timeline de historial ── */}
+        {(() => {
+          // Construye el historial: usa statusHistory si existe, o deriva de los campos del reporte
+          const history = report.statusHistory?.length > 0
+            ? report.statusHistory
+            : [
+                { status: 'pending', changedAt: report.createdAt, changedBy: report.author },
+                ...(report.verifiedAt ? [{ status: 'verified', changedAt: report.verifiedAt, changedBy: report.verifiedBy }] : []),
+                ...(report.status !== 'pending' && report.status !== 'verified' && !report.statusHistory?.length
+                  ? [{ status: report.status, changedAt: report.updatedAt, changedBy: null }]
+                  : []),
+              ];
+
+          const STATUS_TIMELINE = {
+            pending:    { label: 'Reportado',   icon: '📋', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.3)'  },
+            verified:   { label: 'Verificado',  icon: '✅', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.3)'  },
+            inProgress: { label: 'En progreso', icon: '🔧', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)',  border: 'rgba(139,92,246,0.3)'  },
+            resolved:   { label: 'Resuelto',    icon: '🎉', color: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: 'rgba(16,185,129,0.3)'  },
+            rejected:   { label: 'Rechazado',   icon: '❌', color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)'   },
+            closed:     { label: 'Cerrado',     icon: '🔒', color: '#6b7280', bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.3)' },
+          };
+
+          return (
+            <div className="bg-white rounded-3xl p-5"
+              style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+              <h2 className="font-extrabold text-gray-900 text-sm mb-5 flex items-center gap-2">
+                <HiClipboardList className="text-blue-500 text-base" />
+                Historial de cambios
+                <span className="ml-auto text-xs text-gray-400 font-medium bg-gray-50 px-2 py-0.5 rounded-full">
+                  {history.length}
+                </span>
+              </h2>
+
+              <div className="relative">
+                {/* Línea vertical */}
+                {history.length > 1 && (
+                  <div className="absolute left-[15px] top-6 bottom-6 w-0.5 bg-gray-100" />
+                )}
+
+                <div className="flex flex-col gap-4">
+                  {history.map((entry, i) => {
+                    const cfg = STATUS_TIMELINE[entry.status] || STATUS_TIMELINE.pending;
+                    const isLast = i === history.length - 1;
+                    const dateStr = entry.changedAt
+                      ? format(new Date(entry.changedAt), "d 'de' MMMM · HH:mm", { locale: es })
+                      : '—';
+                    const byName = entry.changedBy?.name;
+                    const isAdmin = entry.changedBy?.role === 'admin';
+
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.06 }}
+                        className="flex gap-3 relative"
+                      >
+                        {/* Dot */}
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 relative z-10"
+                          style={{ background: cfg.bg, border: `2px solid ${cfg.border}` }}
+                        >
+                          {cfg.icon}
+                        </div>
+
+                        {/* Contenido */}
+                        <div className={`flex-1 pb-1 ${!isLast ? 'pb-2' : ''}`}>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-extrabold" style={{ color: cfg.color }}>
+                              {cfg.label}
+                            </span>
+                            {isLast && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                                style={{ background: cfg.color }}>
+                                Actual
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">{dateStr}</p>
+                          {byName && (
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                              {isAdmin && <HiShieldCheck className="text-blue-400 text-xs" />}
+                              {isAdmin ? 'Admin' : byName}
+                            </p>
+                          )}
+                          {entry.status === 'rejected' && report.rejectionReason && i === history.length - 1 && (
+                            <p className="text-xs text-red-400 mt-1 bg-red-50 rounded-xl px-3 py-1.5 font-medium">
+                              {report.rejectionReason}
+                            </p>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Comentarios */}
         <div className="bg-white rounded-3xl p-5"
