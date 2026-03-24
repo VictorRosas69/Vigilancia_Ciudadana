@@ -32,6 +32,8 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 60,       // Mantener caché 1 hora
+      networkMode: 'offlineFirst',   // Mostrar datos cacheados sin internet
     },
   },
 });

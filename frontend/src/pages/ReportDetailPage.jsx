@@ -135,6 +135,7 @@ const ReportDetailPage = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [initialized, setInitialized] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [heartBursts, setHeartBursts] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -162,6 +163,16 @@ const ReportDetailPage = () => {
     if (!token) return toast.error('Inicia sesión para reaccionar');
     try {
       await reportService.toggleLike(id);
+      if (!liked) {
+        // Lanzar rafaga de corazones
+        const burst = Array.from({ length: 6 }, (_, i) => ({
+          id: Date.now() + i,
+          x: Math.random() * 60 - 30,
+          delay: i * 0.06,
+        }));
+        setHeartBursts(prev => [...prev, ...burst]);
+        setTimeout(() => setHeartBursts(prev => prev.filter(h => !burst.find(b => b.id === h.id))), 1200);
+      }
       setLiked(!liked);
       setLikesCount(liked ? likesCount - 1 : likesCount + 1);
     } catch (err) {
@@ -509,9 +520,28 @@ const ReportDetailPage = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleLike}
-                className={`flex items-center gap-1 text-sm font-semibold transition-colors ${liked ? 'text-red-500' : 'text-gray-400'}`}
+                className={`relative flex items-center gap-1 text-sm font-semibold transition-colors ${liked ? 'text-red-500' : 'text-gray-400'}`}
               >
-                <HiHeart className={`text-base ${liked ? 'fill-current' : ''}`} />
+                <AnimatePresence>
+                  {heartBursts.map(h => (
+                    <motion.span
+                      key={h.id}
+                      className="absolute bottom-4 left-1/2 pointer-events-none text-red-500 text-lg"
+                      initial={{ opacity: 1, y: 0, x: h.x, scale: 0.6 }}
+                      animate={{ opacity: 0, y: -40, scale: 1.2 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.9, delay: h.delay, ease: 'easeOut' }}
+                    >
+                      ❤️
+                    </motion.span>
+                  ))}
+                </AnimatePresence>
+                <motion.div
+                  animate={liked ? { scale: [1, 1.4, 1] } : { scale: 1 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  <HiHeart className={`text-base ${liked ? 'fill-current' : ''}`} />
+                </motion.div>
                 <span>{likesCount}</span>
               </button>
               <div className="flex items-center gap-1 text-sm text-gray-400">
