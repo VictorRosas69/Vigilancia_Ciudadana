@@ -12,6 +12,8 @@ const TYPE_CONFIG = {
   like:          { icon: HiHeart,       bg: 'bg-red-100',    color: 'text-red-500',    dot: 'bg-red-400'    },
   comment:       { icon: HiChat,        bg: 'bg-indigo-100', color: 'text-indigo-600', dot: 'bg-indigo-400' },
   status_change: { icon: HiCheckCircle, bg: 'bg-green-100',  color: 'text-green-600',  dot: 'bg-green-400'  },
+  message_reply: { icon: HiChat,        bg: 'bg-violet-100', color: 'text-violet-600', dot: 'bg-violet-400' },
+  new_message:   { icon: HiChat,        bg: 'bg-blue-100',   color: 'text-blue-600',   dot: 'bg-blue-400'   },
 };
 
 const timeAgo = (date) => {
@@ -33,7 +35,9 @@ const NotifCard = ({ notif, index, onRead, onDelete }) => {
 
   const handleClick = () => {
     if (!notif.read) onRead(notif._id);
-    if (notif.reportId) navigate(`/reports/${notif.reportId}`);
+    if (notif.type === 'message_reply') navigate('/messages');
+    else if (notif.type === 'new_message') navigate('/admin/messages');
+    else if (notif.reportId) navigate(`/reports/${notif.reportId}`);
   };
 
   return (

@@ -1,34 +1,14 @@
 import api from './api';
 
 const messageService = {
-  send: async (data) => {
-    const response = await api.post('/messages', data);
-    return response.data;
-  },
-  getMine: async () => {
-    const response = await api.get('/messages/mine');
-    return response.data;
-  },
-  getAll: async () => {
-    const response = await api.get('/messages');
-    return response.data;
-  },
-  getAdminUnreadCount: async () => {
-    const response = await api.get('/messages/unread-count');
-    return response.data;
-  },
-  reply: async (id, body) => {
-    const response = await api.post(`/messages/${id}/reply`, { body });
-    return response.data;
-  },
-  markAsRead: async (id) => {
-    const response = await api.patch(`/messages/${id}/read`);
-    return response.data;
-  },
-  markAdminRead: async (id) => {
-    const response = await api.patch(`/messages/${id}/admin-read`);
-    return response.data;
-  },
+  send:               async (data)    => (await api.post('/messages', data)).data,
+  getMine:            async ()        => (await api.get('/messages/mine')).data,
+  citizenReply:       async (id, body)=> (await api.post(`/messages/${id}/citizen-reply`, { body })).data,
+  getAll:             async ()        => (await api.get('/messages')).data,
+  getAdminUnreadCount:async ()        => (await api.get('/messages/unread-count')).data,
+  reply:              async (id, body)=> (await api.post(`/messages/${id}/reply`, { body })).data,
+  markAsRead:         async (id)      => (await api.patch(`/messages/${id}/read`)).data,
+  markAdminRead:      async (id)      => (await api.patch(`/messages/${id}/admin-read`)).data,
 };
 
 export default messageService;
