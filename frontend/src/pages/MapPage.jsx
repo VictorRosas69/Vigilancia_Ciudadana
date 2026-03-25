@@ -74,7 +74,7 @@ const haversineKm = (lat1, lng1, lat2, lng2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const DEFAULT_CENTER = [4.6097, -74.0817]; // Bogotá
+const DEFAULT_CENTER = [1.2136, -77.2811]; // Pasto
 
 const MapPage = () => {
   const navigate = useNavigate();
@@ -128,31 +128,25 @@ const MapPage = () => {
       const { MapContainer, TileLayer, useMap } = await import('react-leaflet');
       delete L.default.Icon.Default.prototype._getIconUrl;
 
-      // Fuerza recálculo de tamaño y centra en los reportes
+      // Fuerza recálculo de tamaño al montar y centra en los reportes una sola vez
       const CenterOnReports = ({ reports }) => {
         const map = useMap();
         const centered = useRef(false);
         useEffect(() => {
-          // Siempre invalidar tamaño al montar (fix tiles grises)
-          setTimeout(() => map.invalidateSize(), 100);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, []);
-        useEffect(() => {
+          map.invalidateSize();
           if (centered.current || reports.length === 0) return;
           centered.current = true;
-          setTimeout(() => {
-            if (reports.length === 1) {
-              map.setView(
-                [reports[0].location.coordinates[1], reports[0].location.coordinates[0]],
-                14
-              );
-            } else {
-              const bounds = L.default.latLngBounds(
-                reports.map(r => [r.location.coordinates[1], r.location.coordinates[0]])
-              );
-              map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-            }
-          }, 150);
+          if (reports.length === 1) {
+            map.setView(
+              [reports[0].location.coordinates[1], reports[0].location.coordinates[0]],
+              14
+            );
+          } else {
+            const bounds = L.default.latLngBounds(
+              reports.map(r => [r.location.coordinates[1], r.location.coordinates[0]])
+            );
+            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+          }
         // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [reports.length]);
         return null;
