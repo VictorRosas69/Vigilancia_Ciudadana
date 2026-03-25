@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,6 +15,49 @@ import usePullToRefresh from '../hooks/usePullToRefresh';
 import ErrorScreen from '../components/ui/ErrorScreen';
 
 const PAGE_SIZE = 10;
+
+// ─── Contador animado ──────────────────────────────────────────────────────────
+const useCountUp = (target, duration = 900) => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!target) return;
+    let start = 0;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      start = Math.min(start + step, target);
+      setCount(Math.floor(start));
+      if (start >= target) clearInterval(timer);
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return count;
+};
+
+// ─── Tarjeta de estadística ────────────────────────────────────────────────────
+const StatCard = memo(({ label, value, icon, gradient, shadow, extra }) => {
+  const count = useCountUp(value);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex-1 min-w-0 rounded-2xl p-3.5 flex flex-col gap-1.5 relative overflow-hidden"
+      style={{ background: gradient, boxShadow: shadow }}
+    >
+      <div className="absolute top-0 right-0 w-16 h-16 rounded-full opacity-10"
+        style={{ background: 'white', transform: 'translate(30%, -30%)' }} />
+      <span className="text-lg leading-none">{icon}</span>
+      <p className="text-white text-xl font-black leading-none tracking-tight">
+        {value !== undefined ? count.toLocaleString() : '—'}
+      </p>
+      <p className="text-white/75 text-[11px] font-semibold leading-tight">{label}</p>
+      {extra && (
+        <span className="absolute top-2.5 right-2.5 text-[10px] font-bold text-white/90 bg-white/15 px-1.5 py-0.5 rounded-full">
+          {extra}
+        </span>
+      )}
+    </motion.div>
+  );
+});
 
 const HISTORY_KEY = 'vc_search_history';
 const getHistory = () => { try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; } };
@@ -129,6 +172,13 @@ const HomePage = () => {
     staleTime: 1000 * 60 * 10,
   });
   const trending = trendingData?.reports?.filter(r => r.likesCount > 0) || [];
+
+  const { data: statsData } = useQuery({
+    queryKey: ['public-stats'],
+    queryFn:  reportService.getStats,
+    staleTime: 1000 * 60 * 5,
+  });
+  const stats = statsData?.stats;
 
   const reports      = data?.pages.flatMap(p => p.reports) || [];
   const totalReports = data?.pages[0]?.pagination?.total ?? reports.length;
@@ -413,6 +463,34 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Stats cards ── */}
+      {stats && !search && !statusFilter && !workTypeFilter && (
+        <div className="px-5 -mt-2 mb-1 flex gap-2.5">
+          <StatCard
+            label="Total reportes"
+            value={stats.total}
+            icon="🏗️"
+            gradient="linear-gradient(135deg, #1e40af 0%, #2563eb 100%)"
+            shadow="0 4px 16px rgba(37,99,235,0.35)"
+          />
+          <StatCard
+            label="Resueltos"
+            value={stats.resolved}
+            icon="✅"
+            gradient="linear-gradient(135deg, #065f46 0%, #059669 100%)"
+            shadow="0 4px 16px rgba(5,150,105,0.35)"
+            extra={stats.resolutionRate > 0 ? `${stats.resolutionRate}%` : null}
+          />
+          <StatCard
+            label="Esta semana"
+            value={stats.thisWeek}
+            icon="📋"
+            gradient="linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%)"
+            shadow="0 4px 16px rgba(109,40,217,0.35)"
+          />
+        </div>
+      )}
 
       {trending.length > 0 && !search && !statusFilter && !workTypeFilter && (
         <div className="bg-gray-50/80 rounded-t-[28px] -mt-3 pt-5">

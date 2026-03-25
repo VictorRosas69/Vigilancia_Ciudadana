@@ -385,6 +385,22 @@ const updateStatus = async (req, res, next) => {
   }
 };
 
+// ─── ESTADÍSTICAS PÚBLICAS ────────────────────────────────────────────────────
+const getPublicStats = async (req, res, next) => {
+  try {
+    const base = { isActive: { $ne: false } };
+    const [total, resolved, inProgress, pending, thisWeek] = await Promise.all([
+      Report.countDocuments(base),
+      Report.countDocuments({ ...base, status: 'resolved' }),
+      Report.countDocuments({ ...base, status: 'inProgress' }),
+      Report.countDocuments({ ...base, status: 'pending' }),
+      Report.countDocuments({ ...base, createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }),
+    ]);
+    const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    res.json({ success: true, stats: { total, resolved, inProgress, pending, thisWeek, resolutionRate } });
+  } catch (error) { next(error); }
+};
+
 module.exports = {
   createReport,
   getReports,
@@ -394,4 +410,5 @@ module.exports = {
   toggleLike,
   updateStatus,
   subscribeToReport,
+  getPublicStats,
 };

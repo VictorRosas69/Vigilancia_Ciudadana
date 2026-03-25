@@ -1,6 +1,11 @@
 import api from './api';
 
 const reportService = {
+  getStats: async () => {
+    const response = await api.get('/reports/stats');
+    return response.data;
+  },
+
   getAll: async (params = {}) => {
     const response = await api.get('/reports', { params });
     return response.data;

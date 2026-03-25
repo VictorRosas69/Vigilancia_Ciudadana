@@ -3,11 +3,13 @@ const router = express.Router();
 const {
   createReport, getReports, getReportById,
   updateReport, deleteReport, toggleLike, updateStatus, subscribeToReport,
+  getPublicStats,
 } = require('../controllers/reportController');
 const { protect, moderatorOrAdmin, protectSSE } = require('../middlewares/authMiddleware');
 const { uploadImages } = require('../config/cloudinary');
 const { validateCreateReport, validateUpdateStatus } = require('../middlewares/validateMiddleware');
 
+router.get('/stats', getPublicStats);
 router.get('/', getReports);
 router.get('/:id', getReportById);
 router.post('/', protect, uploadImages.array('images', 5), validateCreateReport, createReport);
