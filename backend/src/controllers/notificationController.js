@@ -3,11 +3,16 @@ const User         = require('../models/User');
 const webpush      = require('web-push');
 
 // ─── Configurar VAPID ─────────────────────────────────────────────────────────
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
-);
+const vapidEnabled = !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
+if (vapidEnabled) {
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY,
+  );
+} else {
+  console.warn('⚠️  VAPID keys not set — Web Push notifications disabled');
+}
 
 // ─── SSE — registro de clientes activos Map<userId, Set<res>> ─────────────────
 const sseClients = new Map();
@@ -51,6 +56,7 @@ const sseStream = (req, res) => {
 
 // ─── HELPER — enviar Web Push a un usuario ────────────────────────────────────
 const sendPushToUser = async (userId, payload) => {
+  if (!vapidEnabled) return;
   try {
     const user = await User.findById(userId).select('+pushSubscriptions');
     if (!user || !user.pushSubscriptions?.length) return;
