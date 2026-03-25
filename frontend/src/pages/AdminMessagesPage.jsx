@@ -1,246 +1,282 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import toast from 'react-hot-toast';
-import { HiArrowLeft, HiPaperAirplane, HiShieldCheck, HiChevronDown, HiChevronUp } from 'react-icons/hi';
+import {
+  HiArrowLeft, HiPaperAirplane, HiShieldCheck, HiChat,
+} from 'react-icons/hi';
 import messageService from '../services/messageService';
 
-const AVATAR_COLORS = [
-  'from-blue-500 to-blue-700', 'from-violet-500 to-violet-700',
-  'from-green-500 to-green-700', 'from-orange-400 to-orange-600',
+const timeAgo = (d) => formatDistanceToNow(new Date(d), { addSuffix: true, locale: es });
+const fmt     = (d) => new Date(d).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+const initials = (name = '') => name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+const GRADS = [
+  'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+  'linear-gradient(135deg,#8b5cf6,#6d28d9)',
+  'linear-gradient(135deg,#10b981,#059669)',
+  'linear-gradient(135deg,#f59e0b,#d97706)',
 ];
-const getGradient = (name = '') => AVATAR_COLORS[(name?.charCodeAt(0) || 0) % AVATAR_COLORS.length];
-const timeAgo = (date) => formatDistanceToNow(new Date(date), { addSuffix: true, locale: es });
+const gradFor = (name = '') => GRADS[(name.charCodeAt(0) || 0) % GRADS.length];
 
-const MessageItem = ({ msg, onReply, onMarkRead }) => {
-  const [expanded, setExpanded] = useState(!msg.adminRead);
-  const [replyText, setReplyText] = useState('');
-  const [showReply, setShowReply] = useState(false);
-  const gradient = getGradient(msg.from?.name);
-  const firstName = msg.from?.name?.split(' ')[0] || 'Usuario';
+// ─── Burbuja ──────────────────────────────────────────────────────────────────
+const Bubble = ({ body, isAdmin, createdAt, citizenName, citizenAvatar }) => (
+  <div className={`flex items-end gap-2 ${isAdmin ? 'justify-end' : 'justify-start'}`}>
+    {!isAdmin && (
+      citizenAvatar
+        ? <img src={citizenAvatar} className="w-7 h-7 rounded-full object-cover flex-shrink-0 mb-1" alt="" />
+        : <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold mb-1"
+            style={{ background: gradFor(citizenName) }}>
+            {initials(citizenName)}
+          </div>
+    )}
+    <div className={`max-w-[78%] flex flex-col gap-1 ${isAdmin ? 'items-end' : 'items-start'}`}>
+      {!isAdmin && (
+        <span className="text-[10px] font-bold text-gray-500 px-1">{citizenName}</span>
+      )}
+      <div
+        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+          isAdmin ? 'text-white rounded-br-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm'
+        }`}
+        style={isAdmin
+          ? { background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 4px 12px rgba(79,70,229,0.3)' }
+          : { boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }
+        }
+      >
+        {body}
+      </div>
+      <span className="text-[10px] text-gray-400 px-1">{fmt(createdAt)}</span>
+    </div>
+    {isAdmin && (
+      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mb-1"
+        style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)' }}>
+        <HiShieldCheck className="text-white text-xs" />
+      </div>
+    )}
+  </div>
+);
 
-  const handleExpand = () => {
-    setExpanded(!expanded);
-    if (!msg.adminRead) onMarkRead(msg._id);
+// ─── Vista de chat individual ─────────────────────────────────────────────────
+const ChatView = ({ thread, onBack }) => {
+  const bottomRef   = useRef(null);
+  const [text, setText] = useState('');
+  const queryClient = useQueryClient();
+
+  const allMessages = [
+    { body: thread.body, isAdmin: false, createdAt: thread.createdAt },
+    ...(thread.replies || []).map(r => ({ body: r.body, isAdmin: r.isAdmin, createdAt: r.createdAt })),
+  ];
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [allMessages.length]);
+
+  useEffect(() => {
+    if (!thread.adminRead) {
+      messageService.markAdminRead(thread._id).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-msg-count'] });
+    }
+  }, [thread._id]); // eslint-disable-line
+
+  const replyMut = useMutation({
+    mutationFn: (body) => messageService.reply(thread._id, body),
+    onSuccess: () => {
+      setText('');
+      queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || 'Error al enviar'),
+  });
+
+  const handleSend = () => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    replyMut.mutate(trimmed);
   };
+
+  const citizen = thread.from;
+
+  return (
+    <div className="flex flex-col h-screen" style={{ background: '#f1f5f9' }}>
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100"
+        style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+        <button onClick={onBack}
+          className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 active:bg-gray-200 transition-colors">
+          <HiArrowLeft className="text-gray-700 text-lg" />
+        </button>
+        {citizen?.avatar
+          ? <img src={citizen.avatar} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+          : <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
+              style={{ background: gradFor(citizen?.name) }}>
+              {initials(citizen?.name)}
+            </div>
+        }
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-extrabold text-gray-900 truncate">{citizen?.name}</p>
+          <p className="text-xs text-gray-400 truncate">{thread.subject}</p>
+        </div>
+        {citizen?.city && (
+          <span className="text-[10px] text-gray-400 flex-shrink-0">{citizen.city}</span>
+        )}
+      </div>
+
+      {/* Mensajes */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+        {allMessages.map((m, i) => (
+          <Bubble key={i} body={m.body} isAdmin={m.isAdmin} createdAt={m.createdAt}
+            citizenName={citizen?.name} citizenAvatar={citizen?.avatar} />
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="flex-shrink-0 px-4 py-3 bg-white border-t border-gray-100 flex items-end gap-2"
+        style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 12px), 16px)' }}>
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+          placeholder="Responder al ciudadano..."
+          rows={1}
+          maxLength={2000}
+          className="flex-1 resize-none border border-gray-200 rounded-2xl px-4 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
+          style={{ maxHeight: 120 }}
+        />
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleSend}
+          disabled={replyMut.isPending || !text.trim()}
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40 transition-opacity"
+          style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)' }}
+        >
+          {replyMut.isPending
+            ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            : <HiPaperAirplane className="text-white text-base rotate-90" />
+          }
+        </motion.button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Tarjeta de conversación ──────────────────────────────────────────────────
+const ConvCard = ({ thread, onClick }) => {
+  const lastReply = thread.replies?.[thread.replies.length - 1];
+  const lastMsg   = lastReply || { body: thread.body, createdAt: thread.createdAt };
+  const hasUnread = !thread.adminRead;
+  const citizen   = thread.from;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-3xl overflow-hidden"
+      onClick={onClick}
+      className="bg-white rounded-2xl p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
       style={{
-        boxShadow: !msg.adminRead
-          ? '0 2px 16px rgba(99,102,241,0.15), 0 0 0 1.5px rgba(99,102,241,0.25)'
-          : '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)',
+        boxShadow: hasUnread
+          ? '0 2px 16px rgba(79,70,229,0.18), 0 0 0 1.5px rgba(79,70,229,0.2)'
+          : '0 1px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.04)',
       }}
     >
-      {/* Header del mensaje */}
-      <button onClick={handleExpand} className="w-full p-4 flex items-start gap-3 text-left">
-        <div className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0`}>
-          {msg.from?.avatar?.url ? (
-            <img src={msg.from.avatar.url} alt="" className="w-full h-full object-cover rounded-2xl" />
-          ) : (
-            <span className="text-white font-extrabold text-base">{firstName[0]?.toUpperCase()}</span>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-extrabold text-gray-900 truncate">{msg.from?.name}</p>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {!msg.adminRead && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
-              {expanded ? <HiChevronUp className="text-gray-400 text-sm" /> : <HiChevronDown className="text-gray-400 text-sm" />}
-            </div>
+      {citizen?.avatar
+        ? <img src={citizen.avatar} className="w-11 h-11 rounded-full object-cover flex-shrink-0" alt="" />
+        : <div className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold"
+            style={{ background: gradFor(citizen?.name) }}>
+            {initials(citizen?.name)}
           </div>
-          <p className="text-xs font-bold text-gray-600 truncate mt-0.5">{msg.subject}</p>
-          <p className="text-[11px] text-gray-400 mt-0.5">{timeAgo(msg.createdAt)}</p>
+      }
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2 mb-0.5">
+          <p className={`text-sm truncate ${hasUnread ? 'font-extrabold text-gray-900' : 'font-semibold text-gray-700'}`}>
+            {citizen?.name}
+          </p>
+          <span className="text-[10px] text-gray-400 flex-shrink-0">{timeAgo(lastMsg.createdAt)}</span>
         </div>
-      </button>
-
-      {/* Contenido expandido */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 border-t border-gray-50 pt-3 flex flex-col gap-3">
-              {/* Mensaje original */}
-              <div className="flex justify-end">
-                <div className="max-w-[90%] rounded-2xl rounded-tr-sm px-4 py-3"
-                  style={{ background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)' }}>
-                  <p className="text-sm text-gray-700 leading-relaxed">{msg.body}</p>
-                </div>
-              </div>
-
-              {/* Respuestas anteriores */}
-              {msg.replies.map((reply, i) => (
-                <div key={i} className={`flex ${reply.isAdmin ? 'justify-start' : 'justify-end'}`}>
-                  {reply.isAdmin && (
-                    <div className="max-w-[90%] rounded-2xl rounded-tl-sm px-4 py-3"
-                      style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <HiShieldCheck className="text-white/80 text-xs" />
-                        <span className="text-[10px] font-bold text-white/80">Tú (Admin)</span>
-                      </div>
-                      <p className="text-sm text-white leading-relaxed">{reply.body}</p>
-                      <p className="text-[10px] text-white/60 mt-1">{timeAgo(reply.createdAt)}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* Botón responder */}
-              {!showReply ? (
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setShowReply(true)}
-                  className="w-full py-2.5 rounded-2xl text-sm font-bold border-2 border-dashed border-indigo-200 text-indigo-500 flex items-center justify-center gap-2"
-                >
-                  <HiPaperAirplane className="rotate-90" /> Responder
-                </motion.button>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <textarea
-                    value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
-                    placeholder="Escribe tu respuesta..."
-                    rows={3}
-                    className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
-                    autoFocus
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => { setShowReply(false); setReplyText(''); }}
-                      className="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold text-sm"
-                    >
-                      Cancelar
-                    </button>
-                    <motion.button
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => { onReply(msg._id, replyText); setShowReply(false); setReplyText(''); }}
-                      disabled={!replyText.trim()}
-                      className="flex-1 py-3 rounded-2xl text-white font-bold text-sm disabled:opacity-40 flex items-center justify-center gap-2"
-                      style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)' }}
-                    >
-                      <HiPaperAirplane className="rotate-90 text-sm" /> Enviar
-                    </motion.button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <p className="text-xs text-gray-400 truncate mb-0.5">{thread.subject}</p>
+        <p className={`text-xs truncate ${hasUnread ? 'text-violet-600 font-semibold' : 'text-gray-400'}`}>
+          {lastReply?.isAdmin ? '🛡️ Tú: ' : `${citizen?.name?.split(' ')[0]}: `}{lastMsg.body}
+        </p>
+      </div>
+      {hasUnread && <span className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />}
     </motion.div>
   );
 };
 
+// ─── Página principal admin ───────────────────────────────────────────────────
 const AdminMessagesPage = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const [selected, setSelected] = useState(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-messages'],
-    queryFn: messageService.getAll,
-    staleTime: 0,
+    queryKey:        ['admin-messages'],
+    queryFn:         messageService.getAll,
+    refetchInterval: 6000,
+    staleTime:       0,
   });
 
   const messages = data?.messages || [];
-  const unreadCount = messages.filter(m => !m.adminRead).length;
+  const unread   = messages.filter(m => !m.adminRead).length;
 
-  const replyMutation = useMutation({
-    mutationFn: ({ id, body }) => messageService.reply(id, body),
-    onSuccess: () => {
-      toast.success('Respuesta enviada');
-      queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
-    },
-    onError: () => toast.error('Error al responder'),
-  });
+  useEffect(() => {
+    if (selected) {
+      const updated = messages.find(m => m._id === selected._id);
+      if (updated) setSelected(updated);
+    }
+  }, [messages]); // eslint-disable-line
 
-  const markReadMutation = useMutation({
-    mutationFn: (id) => messageService.markAdminRead(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-messages'] }),
-  });
+  if (selected) {
+    return <ChatView thread={selected} onBack={() => setSelected(null)} />;
+  }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: 'var(--page-bg)' }}>
+    <div className="min-h-screen pb-8" style={{ background: 'var(--page-bg)' }}>
 
       {/* Header */}
-      <div className="relative overflow-hidden" style={{
-        background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
-      }}>
+      <div className="relative overflow-hidden"
+        style={{ background: 'linear-gradient(150deg,#0f172a 0%,#3b0764 50%,#4f46e5 100%)' }}>
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)' }} />
+            style={{ background: 'radial-gradient(circle,rgba(124,58,237,0.35) 0%,transparent 70%)' }} />
         </div>
-
-        <div className="relative px-5 pt-14 pb-6">
-          <div className="flex items-center gap-3">
-            <motion.button
-              whileTap={{ scale: 0.92 }}
-              onClick={() => navigate(-1)}
-              className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}
-            >
-              <HiArrowLeft className="text-white text-xl" />
-            </motion.button>
-            <div>
-              <h1 className="text-white text-2xl font-extrabold tracking-tight flex items-center gap-2">
-                Mensajes
-                {unreadCount > 0 && (
-                  <span className="text-sm bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </h1>
-              <p className="text-blue-200/70 text-sm mt-0.5 font-medium">
-                {messages.length} mensaje{messages.length !== 1 ? 's' : ''} de ciudadanos
-              </p>
-            </div>
+        <div className="relative px-5 pt-14 pb-6 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
+            <HiChat className="text-white text-xl" />
+          </div>
+          <div>
+            <h1 className="text-white text-2xl font-extrabold tracking-tight">Mensajes</h1>
+            <p className="text-violet-200/70 text-sm mt-0.5 font-medium">
+              {unread > 0 ? `${unread} sin leer` : `${messages.length} conversación${messages.length !== 1 ? 'es' : ''}`}
+            </p>
           </div>
         </div>
-
         <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
-      <div className="px-4 -mt-1 flex flex-col gap-3">
+      <div className="-mt-1 px-4 pt-2 flex flex-col gap-2.5">
         {isLoading && [1, 2, 3].map(i => (
-          <div key={i} className="bg-white rounded-3xl h-20 animate-pulse"
-            style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }} />
+          <div key={i} className="bg-white rounded-2xl h-16 animate-pulse"
+            style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.05)' }} />
         ))}
+
+        <AnimatePresence>
+          {!isLoading && messages.map(msg => (
+            <ConvCard key={msg._id} thread={msg} onClick={() => setSelected(msg)} />
+          ))}
+        </AnimatePresence>
 
         {!isLoading && messages.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-24 text-center"
-          >
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-5 text-5xl"
-              style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}>
-              💬
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-4"
+              style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 12px 40px rgba(79,70,229,0.3)' }}>
+              <HiChat className="text-white text-4xl" />
             </div>
-            <h3 className="text-base font-extrabold text-gray-800">Sin mensajes</h3>
-            <p className="text-gray-400 text-sm mt-1.5 leading-relaxed max-w-[200px]">
-              Los ciudadanos aún no han enviado mensajes
-            </p>
-          </motion.div>
+            <h3 className="text-base font-extrabold mb-1" style={{ color: 'var(--text-1)' }}>Sin mensajes</h3>
+            <p className="text-sm" style={{ color: 'var(--text-2)' }}>Los ciudadanos aún no han enviado mensajes</p>
+          </div>
         )}
-
-        {!isLoading && messages.map(msg => (
-          <MessageItem
-            key={msg._id}
-            msg={msg}
-            onReply={(id, body) => replyMutation.mutate({ id, body })}
-            onMarkRead={(id) => markReadMutation.mutate(id)}
-          />
-        ))}
       </div>
     </div>
   );
