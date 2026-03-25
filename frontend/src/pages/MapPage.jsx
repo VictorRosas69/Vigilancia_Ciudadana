@@ -251,7 +251,7 @@ const MapPage = () => {
 
   const cityName = reportsWithCoords[0]?.location?.city || '';
 
-  const mapHeight = 'calc(100dvh - 64px)';
+  const mapHeight = '100dvh';
 
   return (
     <div className="fixed inset-0">
@@ -484,7 +484,7 @@ const MapPage = () => {
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             className="absolute left-0 right-0 z-[1001] px-4"
-            style={{ bottom: '80px' }}
+            style={{ bottom: 'max(96px, calc(80px + env(safe-area-inset-bottom)))' }}
           >
             <div className="bg-white rounded-3xl p-5" style={{ boxShadow: '0 -4px 40px rgba(0,0,0,0.18)' }}>
               <div className="flex items-center justify-between mb-4">
