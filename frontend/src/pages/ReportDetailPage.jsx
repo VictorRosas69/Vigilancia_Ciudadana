@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { HiArrowLeft, HiLocationMarker, HiHeart, HiChatAlt, HiEye, HiTrash, HiPaperAirplane, HiShare, HiDotsVertical, HiPencil, HiClipboardList, HiShieldCheck } from 'react-icons/hi';
+import { HiArrowLeft, HiLocationMarker, HiHeart, HiChatAlt, HiEye, HiTrash, HiPaperAirplane, HiShare, HiDotsVertical, HiPencil, HiClipboardList, HiShieldCheck, HiX } from 'react-icons/hi';
 import reportService from '../services/reportService';
 import commentService from '../services/commentService';
 import useAuthStore from '../store/authStore';
-
-// ── Config ────────────────────────────────────────────────────────────────────
+import useSwipeBack from '../hooks/useSwipeBack';
+import haptic from '../utils/haptic';
 
 const STATUS_CONFIG = {
   pending:    { dot: 'bg-orange-400', label: 'Pendiente' },
@@ -53,8 +53,6 @@ const Avatar = ({ name = '', src = '', size = 'md' }) => {
     </div>
   );
 };
-
-// ── Mapa en el detalle ────────────────────────────────────────────────────────
 
 const MapSection = ({ coordinates }) => {
   const [MapComponents, setMapComponents] = useState(null);
@@ -123,12 +121,12 @@ const MapSection = ({ coordinates }) => {
   );
 };
 
-// ── Página principal ──────────────────────────────────────────────────────────
-
 const ReportDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
+  const queryClient = useQueryClient();
+  useSwipeBack();
   const [comment, setComment] = useState('');
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
@@ -137,6 +135,9 @@ const ReportDetailPage = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [heartBursts, setHeartBursts] = useState([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDeleteComment, setConfirmDeleteComment] = useState(null);
+  const [fullscreenIndex, setFullscreenIndex] = useState(null);
+  const touchStartXRef = useRef(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['report', id],
@@ -159,9 +160,35 @@ const ReportDetailPage = () => {
     }
   }, [report]);
 
+  useEffect(() => {
+    if (!id || !token) return;
+    const base = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+    const es = new EventSource(`${base}/reports/${id}/events?token=${token}`);
+
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.type === 'status_change') {
+          queryClient.invalidateQueries({ queryKey: ['report', id] });
+          const STATUS_LABELS = {
+            pending: 'Pendiente', verified: 'Verificado', inProgress: 'En progreso',
+            resolved: 'Resuelto ✅', rejected: 'Rechazado', closed: 'Cerrado',
+          };
+          toast(`Estado actualizado: ${STATUS_LABELS[data.status] || data.status}`, {
+            icon: '🔄',
+            style: { background: '#1e3a8a', color: 'white', fontWeight: 600 },
+          });
+        }
+      } catch {}
+    };
+
+    return () => es.close();
+  }, [id, token, queryClient]);
+
   const handleLike = async () => {
     if (!token) return toast.error('Inicia sesión para reaccionar');
     try {
+      if (navigator.vibrate) navigator.vibrate(!liked ? [10, 30, 60] : 8);
       await reportService.toggleLike(id);
       if (!liked) {
         // Lanzar rafaga de corazones
@@ -185,6 +212,7 @@ const ReportDetailPage = () => {
     if (!comment.trim()) return;
     if (!token) return toast.error('Inicia sesión para comentar');
     try {
+      if (navigator.vibrate) navigator.vibrate(12);
       await commentService.create({ reportId: id, content: comment });
       setComment('');
       refetchComments();
@@ -205,18 +233,24 @@ const ReportDetailPage = () => {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = (commentId) => {
+    setConfirmDeleteComment(commentId);
+  };
+
+  const handleConfirmDeleteComment = async () => {
     try {
-      await commentService.delete(commentId);
+      await commentService.delete(confirmDeleteComment);
       refetchComments();
       toast.success('Comentario eliminado');
     } catch (err) {
       toast.error('Error al eliminar');
+    } finally {
+      setConfirmDeleteComment(null);
     }
   };
 
   if (isLoading) return (
-    <div className="min-h-screen pb-48" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-48" style={{ background: 'var(--page-bg)' }}>
       {/* Hero skeleton */}
       <div className="h-72 bg-gray-200 animate-pulse relative">
         <div className="absolute top-12 left-4 w-10 h-10 bg-white/30 rounded-2xl" />
@@ -265,7 +299,7 @@ const ReportDetailPage = () => {
   );
 
   if (!report) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--page-bg)' }}>
       <div className="flex flex-col items-center gap-4 px-6 text-center">
         <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
           style={{ background: 'linear-gradient(135deg, #fee2e2, #fecaca)' }}>
@@ -277,7 +311,6 @@ const ReportDetailPage = () => {
     </div>
   );
 
-  // isOwner se calcula aquí donde report ya está garantizado
   const authorId = typeof report.author === 'object' ? report.author?._id : report.author;
   const isOwner = !!(user && authorId && (
     String(user.id) === String(authorId) ||
@@ -299,19 +332,76 @@ const ReportDetailPage = () => {
     status.dot === 'bg-green-500'  ? 'bg-green-50 text-green-600' :
                                      'bg-red-50 text-red-600';
 
+  const isResolved = report.status === 'resolved';
+  const isRejected = report.status === 'rejected';
+  const isReadonly = isResolved || isRejected;
+
   return (
-    <div className="min-h-screen pb-48" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-48" style={{ background: 'var(--page-bg)' }}>
+      {/* Banner readonly */}
+      {isReadonly && (
+        <motion.div
+          initial={{ y: -40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 30 }}
+          className="fixed top-0 left-0 right-0 z-30 flex justify-center pointer-events-none"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 8px)' }}
+        >
+          <div className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-white shadow-lg"
+            style={{ background: isResolved ? 'linear-gradient(135deg,#059669,#047857)' : 'linear-gradient(135deg,#dc2626,#b91c1c)', boxShadow: isResolved ? '0 4px 20px rgba(5,150,105,0.4)' : '0 4px 20px rgba(220,38,38,0.4)' }}>
+            <span>{isResolved ? '✅' : '❌'}</span>
+            {isResolved ? 'Reporte resuelto — solo lectura' : 'Reporte rechazado — solo lectura'}
+          </div>
+        </motion.div>
+      )}
 
       {/* ── Hero image ── */}
       <div className="relative">
         {report.images?.length > 0 ? (
-          <div className="h-72 bg-gray-200 overflow-hidden">
-            <img
-              src={report.images[activeImage]?.url}
-              alt={report.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20" />
+          <div
+            className="h-72 bg-gray-200 overflow-hidden cursor-pointer"
+            onTouchStart={(e) => { touchStartXRef.current = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              if (touchStartXRef.current === null) return;
+              const diff = touchStartXRef.current - e.changedTouches[0].clientX;
+              if (Math.abs(diff) > 50) {
+                if (diff > 0 && activeImage < report.images.length - 1) setActiveImage(i => i + 1);
+                else if (diff < 0 && activeImage > 0) setActiveImage(i => i - 1);
+                if (navigator.vibrate) navigator.vibrate(8);
+              }
+              touchStartXRef.current = null;
+            }}
+            onClick={() => setFullscreenIndex(activeImage)}
+          >
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={activeImage}
+                src={report.images[activeImage]?.url}
+                alt={report.title}
+                className="w-full h-full object-cover"
+                initial={{ opacity: 0, scale: 1.03 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              />
+            </AnimatePresence>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20 pointer-events-none" />
+            {/* Tap to expand hint */}
+            <div className="absolute bottom-3 right-3 bg-black/30 backdrop-blur-sm rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 pointer-events-none">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+                <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+              </svg>
+              <span className="text-white text-[10px] font-semibold">Ver</span>
+            </div>
+            {/* Swipe indicator dots */}
+            {report.images.length > 1 && (
+              <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+                {report.images.map((_, i) => (
+                  <div key={i} className={`rounded-full transition-all duration-200 ${i === activeImage ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'}`} />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="h-52 relative overflow-hidden" style={{
@@ -329,11 +419,10 @@ const ReportDetailPage = () => {
                 {report.workType === 'road' ? '🛣️' : report.workType === 'park' ? '🌳' : report.workType === 'lighting' ? '💡' : '🏗️'}
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-6 rounded-t-[24px]" style={{ background: '#f8fafc' }} />
+            <div className="absolute bottom-0 left-0 right-0 h-6 rounded-t-[24px]" style={{ background: 'var(--page-bg)' }} />
           </div>
         )}
 
-        {/* Botón back */}
         <button
           onClick={() => navigate(-1)}
           className="absolute top-12 left-4 w-10 h-10 bg-black/25 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"
@@ -341,7 +430,48 @@ const ReportDetailPage = () => {
           <HiArrowLeft className="text-white text-xl" />
         </button>
 
-        {/* Botón compartir */}
+        <button
+          onClick={async () => {
+            if (navigator.vibrate) navigator.vibrate(12);
+            try {
+              const { default: jsPDF } = await import('jspdf');
+              const doc = new jsPDF();
+              doc.setFontSize(18);
+              doc.setFont('helvetica', 'bold');
+              doc.text(report.title, 20, 25);
+              doc.setFontSize(11);
+              doc.setFont('helvetica', 'normal');
+              const statusLabel = { pending:'Pendiente', verified:'Verificado', inProgress:'En progreso', resolved:'Resuelto', rejected:'Rechazado' };
+              const priorityLabel = { low:'Baja', medium:'Media', high:'Alta', critical:'Crítica' };
+              doc.text(`Estado: ${statusLabel[report.status] || report.status}`, 20, 38);
+              doc.text(`Prioridad: ${priorityLabel[report.priority] || report.priority}`, 20, 48);
+              const dateStr = new Date(report.createdAt).toLocaleDateString('es-CO', { day:'2-digit', month:'long', year:'numeric' });
+              doc.text(`Fecha: ${dateStr}`, 20, 58);
+              if (report.location?.city) {
+                const loc = [report.location.address, report.location.neighborhood, report.location.city].filter(Boolean).join(', ');
+                const locLines = doc.splitTextToSize(`Ubicación: ${loc}`, 170);
+                doc.text(locLines, 20, 68);
+              }
+              doc.setFontSize(10);
+              const descLines = doc.splitTextToSize(report.description, 170);
+              doc.text(descLines, 20, 85);
+              doc.setFontSize(8);
+              doc.setTextColor(150);
+              doc.text('Generado por Vigilancia Ciudadana', 20, 285);
+              doc.save(`reporte-${id}.pdf`);
+            } catch { toast.error('Error al generar PDF'); }
+          }}
+          className="absolute top-12 right-28 w-10 h-10 bg-black/25 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"
+          title="Exportar PDF"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="9" y1="13" x2="15" y2="13"/>
+            <line x1="9" y1="17" x2="15" y2="17"/>
+          </svg>
+        </button>
+
         <button
           onClick={async () => {
             const url = window.location.href;
@@ -362,7 +492,6 @@ const ReportDetailPage = () => {
           <HiShare className="text-white text-xl" />
         </button>
 
-        {/* Botón ⋮ opciones (solo autor/admin) */}
         {isOwner && (
           <button
             onClick={() => setMenuOpen(true)}
@@ -372,86 +501,129 @@ const ReportDetailPage = () => {
           </button>
         )}
 
-        {/* Action sheet opciones */}
-        {menuOpen && (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={() => setMenuOpen(false)}>
-            <div className="absolute inset-0 bg-black/50" />
-            <motion.div
-              initial={{ y: 200, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-              className="relative bg-white rounded-t-3xl px-5 pt-4 max-w-lg mx-auto w-full"
-              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 88px)' }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="w-10 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest text-center mb-5">
-                Opciones del reporte
-              </p>
-
-              <button
-                onClick={() => { setMenuOpen(false); navigate(`/reports/${id}/edit`); }}
-                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-gray-50 active:bg-blue-50 transition-colors mb-3 border border-gray-100"
+        <AnimatePresence>
+          {menuOpen && (
+            <div className="fixed inset-0 z-[100] flex flex-col justify-end" onClick={() => setMenuOpen(false)}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+                className="relative rounded-t-3xl px-5 pt-4 max-w-lg mx-auto w-full"
+                style={{
+                  background: 'var(--card-bg)',
+                  paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)',
+                }}
+                onClick={e => e.stopPropagation()}
               >
-                <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
-                  <HiPencil className="text-white text-lg" />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="text-sm font-bold text-gray-900">Editar reporte</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Modifica título, descripción o ubicación</p>
-                </div>
-              </button>
+                <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--text-3)' }} />
 
-              <button
-                onClick={() => { setMenuOpen(false); setConfirmDelete(true); }}
-                className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl bg-gray-50 active:bg-red-50 transition-colors border border-gray-100"
-              >
-                <div className="w-11 h-11 bg-red-500 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-200">
-                  <HiTrash className="text-white text-lg" />
-                </div>
-                <div className="text-left flex-1">
-                  <p className="text-sm font-bold text-red-500">Eliminar reporte</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Esta acción no se puede deshacer</p>
-                </div>
-              </button>
-            </motion.div>
-          </div>
-        )}
+                <p className="text-[10px] font-bold uppercase tracking-widest text-center mb-4" style={{ color: 'var(--text-3)' }}>
+                  Opciones del reporte
+                </p>
 
-        {/* Modal confirmación eliminar */}
-        {confirmDelete && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center px-4 pb-8">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { haptic.tap(); setMenuOpen(false); navigate(`/reports/${id}/edit`); }}
+                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl mb-2.5 transition-colors"
+                  style={{ background: 'var(--input-bg)', border: '1.5px solid var(--border)' }}
+                >
+                  <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}>
+                    <HiPencil className="text-white text-lg" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-sm font-bold" style={{ color: 'var(--text-1)' }}>Editar reporte</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-2)' }}>Modifica título, descripción o ubicación</p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ color: 'var(--text-3)' }}>
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => { haptic.error(); setMenuOpen(false); setConfirmDelete(true); }}
+                  className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-colors"
+                  style={{ background: 'rgba(239,68,68,0.08)', border: '1.5px solid rgba(239,68,68,0.2)' }}
+                >
+                  <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)', boxShadow: '0 4px 14px rgba(239,68,68,0.35)' }}>
+                    <HiTrash className="text-white text-lg" />
+                  </div>
+                  <div className="text-left flex-1">
+                    <p className="text-sm font-bold text-red-500">Eliminar reporte</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-2)' }}>Esta acción no se puede deshacer</p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </motion.button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {confirmDelete && (
             <motion.div
-              initial={{ y: 60, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="bg-white rounded-3xl p-6 w-full max-w-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center px-6"
+              onClick={() => setConfirmDelete(false)}
             >
-              <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <HiTrash className="text-red-500 text-2xl" />
-              </div>
-              <h3 className="text-lg font-extrabold text-gray-900 text-center mb-1">¿Eliminar reporte?</h3>
-              <p className="text-sm text-gray-400 text-center mb-6">Esta acción no se puede deshacer.</p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setConfirmDelete(false)}
-                  className="flex-1 py-3.5 rounded-2xl bg-gray-100 text-gray-700 font-bold text-sm"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleDeleteReport}
-                  className="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-200"
-                >
-                  Sí, eliminar
-                </button>
-              </div>
+              <motion.div
+                initial={{ scale: 0.88, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.88, opacity: 0, y: 20 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+                className="rounded-3xl p-7 w-full max-w-sm"
+                style={{ background: 'var(--card-bg)', boxShadow: '0 32px 80px rgba(0,0,0,0.4)' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+                  style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)', boxShadow: '0 8px 24px rgba(239,68,68,0.4)' }}>
+                  <HiTrash className="text-white text-3xl" />
+                </div>
+
+                <h3 className="text-xl font-extrabold text-center mb-2" style={{ color: 'var(--text-1)' }}>
+                  ¿Eliminar reporte?
+                </h3>
+                <p className="text-sm text-center mb-7" style={{ color: 'var(--text-2)' }}>
+                  Esta acción es permanente y no se puede deshacer.
+                </p>
+
+                <div className="flex gap-3">
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 py-3.5 rounded-2xl text-sm font-bold"
+                    style={{ background: 'var(--input-bg)', color: 'var(--text-1)', border: '1.5px solid var(--border)' }}
+                  >
+                    Cancelar
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => { haptic.error(); handleDeleteReport(); }}
+                    className="flex-1 py-3.5 rounded-2xl text-white font-bold text-sm"
+                    style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)', boxShadow: '0 6px 20px rgba(239,68,68,0.4)' }}
+                  >
+                    Sí, eliminar
+                  </motion.button>
+                </div>
+              </motion.div>
             </motion.div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* ── Thumbnails ── */}
       {report.images?.length > 1 && (
         <div className="flex gap-2 px-5 py-3 bg-white border-b border-gray-100 overflow-x-auto">
           {report.images.map((img, i) => (
@@ -468,13 +640,9 @@ const ReportDetailPage = () => {
         </div>
       )}
 
-      {/* ── Contenido principal ── */}
       <div className="px-4 py-5 flex flex-col gap-4">
-
-        {/* Tarjeta info principal */}
         <div className="bg-white rounded-3xl p-5"
           style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
-          {/* Tipo + Estado */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-gray-400 font-semibold bg-gray-50 px-3 py-1.5 rounded-xl">
               {WORK_TYPE_LABELS[report.workType] || '🔧 Otro'}
@@ -485,12 +653,10 @@ const ReportDetailPage = () => {
             </span>
           </div>
 
-          {/* Título */}
           <h1 className="text-xl font-extrabold text-gray-900 leading-snug mb-3">
             {report.title}
           </h1>
 
-          {/* Badge prioridad */}
           {priority && (
             <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full mb-4 ${priority.badge}`}>
               <span className={`w-2 h-2 rounded-full ${priority.dot}`} />
@@ -498,14 +664,12 @@ const ReportDetailPage = () => {
             </span>
           )}
 
-          {/* Descripción */}
           {report.description && (
             <p className="text-gray-500 text-sm leading-relaxed mb-4 pt-3 border-t border-gray-50">
               {report.description}
             </p>
           )}
 
-          {/* Autor + stats */}
           <div className="flex items-center justify-between pt-3 border-t border-gray-50">
             <button
               onClick={() => { const aid = report.author?._id; if (aid) navigate(`/users/${aid}`); }}
@@ -519,7 +683,9 @@ const ReportDetailPage = () => {
             </button>
             <div className="flex items-center gap-3">
               <button
-                onClick={handleLike}
+                onClick={isReadonly ? undefined : handleLike}
+                disabled={isReadonly}
+                title={isReadonly ? 'Este reporte ya no acepta reacciones' : ''}
                 className={`relative flex items-center gap-1 text-sm font-semibold transition-colors ${liked ? 'text-red-500' : 'text-gray-400'}`}
               >
                 <AnimatePresence>
@@ -542,7 +708,18 @@ const ReportDetailPage = () => {
                 >
                   <HiHeart className={`text-base ${liked ? 'fill-current' : ''}`} />
                 </motion.div>
-                <span>{likesCount}</span>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={likesCount}
+                    initial={{ y: liked ? -12 : 12, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: liked ? 12 : -12, opacity: 0 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className="inline-block min-w-[1.5ch] text-center"
+                  >
+                    {likesCount}
+                  </motion.span>
+                </AnimatePresence>
               </button>
               <div className="flex items-center gap-1 text-sm text-gray-400">
                 <HiChatAlt className="text-base" />
@@ -556,7 +733,6 @@ const ReportDetailPage = () => {
           </div>
         </div>
 
-        {/* Tarjeta ubicación */}
         <div className="bg-white rounded-3xl px-5 py-4 flex items-center gap-3"
           style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
           <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -577,7 +753,6 @@ const ReportDetailPage = () => {
           </div>
         </div>
 
-        {/* Mapa */}
         {hasCoords && (
           <div className="bg-white rounded-3xl overflow-hidden"
             style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
@@ -585,9 +760,7 @@ const ReportDetailPage = () => {
           </div>
         )}
 
-        {/* ── Timeline de historial ── */}
         {(() => {
-          // Construye el historial: usa statusHistory si existe, o deriva de los campos del reporte
           const history = report.statusHistory?.length > 0
             ? report.statusHistory
             : [
@@ -619,7 +792,6 @@ const ReportDetailPage = () => {
               </h2>
 
               <div className="relative">
-                {/* Línea vertical */}
                 {history.length > 1 && (
                   <div className="absolute left-[15px] top-6 bottom-6 w-0.5 bg-gray-100" />
                 )}
@@ -642,7 +814,6 @@ const ReportDetailPage = () => {
                         transition={{ delay: i * 0.06 }}
                         className="flex gap-3 relative"
                       >
-                        {/* Dot */}
                         <div
                           className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 relative z-10"
                           style={{ background: cfg.bg, border: `2px solid ${cfg.border}` }}
@@ -650,7 +821,6 @@ const ReportDetailPage = () => {
                           {cfg.icon}
                         </div>
 
-                        {/* Contenido */}
                         <div className={`flex-1 pb-1 ${!isLast ? 'pb-2' : ''}`}>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-extrabold" style={{ color: cfg.color }}>
@@ -685,7 +855,6 @@ const ReportDetailPage = () => {
           );
         })()}
 
-        {/* Comentarios */}
         <div className="bg-white rounded-3xl p-5"
           style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
           <h2 className="font-extrabold text-gray-900 text-sm mb-4 flex items-center gap-2">
@@ -736,24 +905,108 @@ const ReportDetailPage = () => {
 
       </div>
 
-      {/* ── Barra de comentarios fija ── */}
+      <AnimatePresence>
+        {fullscreenIndex !== null && report.images?.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[300] bg-black/95 flex items-center justify-center"
+            onClick={() => setFullscreenIndex(null)}
+          >
+            <button
+              className="absolute top-12 right-4 w-10 h-10 rounded-2xl flex items-center justify-center z-10"
+              style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
+              onClick={() => setFullscreenIndex(null)}
+            >
+              <HiX className="text-white text-xl" />
+            </button>
+
+            {report.images.length > 1 && (
+              <div className="absolute top-14 left-0 right-0 text-center text-white/60 text-sm font-semibold pointer-events-none">
+                {fullscreenIndex + 1} / {report.images.length}
+              </div>
+            )}
+
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={fullscreenIndex}
+                src={report.images[fullscreenIndex]?.url}
+                alt=""
+                className="max-w-full max-h-full object-contain select-none"
+                style={{ maxHeight: '85dvh' }}
+                initial={{ opacity: 0, scale: 0.88 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.88 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+                onClick={(e) => e.stopPropagation()}
+                onTouchStart={(e) => { touchStartXRef.current = e.touches[0].clientX; }}
+                onTouchEnd={(e) => {
+                  if (touchStartXRef.current === null) return;
+                  const diff = touchStartXRef.current - e.changedTouches[0].clientX;
+                  if (Math.abs(diff) > 50) {
+                    if (diff > 0) setFullscreenIndex(i => Math.min(i + 1, report.images.length - 1));
+                    else setFullscreenIndex(i => Math.max(i - 1, 0));
+                    if (navigator.vibrate) navigator.vibrate(8);
+                  }
+                  touchStartXRef.current = null;
+                }}
+              />
+            </AnimatePresence>
+
+            {fullscreenIndex > 0 && (
+              <button
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
+                onClick={(e) => { e.stopPropagation(); setFullscreenIndex(i => i - 1); }}
+              >
+                <HiArrowLeft className="text-white text-xl" />
+              </button>
+            )}
+            {fullscreenIndex < report.images.length - 1 && (
+              <button
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}
+                onClick={(e) => { e.stopPropagation(); setFullscreenIndex(i => i + 1); }}
+              >
+                <HiArrowLeft className="text-white text-xl rotate-180" />
+              </button>
+            )}
+
+            {report.images.length > 1 && (
+              <div className="absolute bottom-10 flex gap-2 justify-center pointer-events-none">
+                {report.images.map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-1.5 rounded-full transition-all duration-300"
+                    style={{
+                      width: i === fullscreenIndex ? '20px' : '6px',
+                      background: i === fullscreenIndex ? 'white' : 'rgba(255,255,255,0.35)',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div
         className="fixed left-0 right-0 z-40 max-w-lg mx-auto"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 72px)' }}
       >
-        {/* Fondo difuminado que cubre el contenido al hacer scroll */}
         <div className="absolute inset-x-0 -top-6 bottom-0 pointer-events-none"
-          style={{ background: 'linear-gradient(to top, rgba(248,250,252,1) 60%, transparent 100%)' }} />
+          style={{ background: 'linear-gradient(to top, var(--page-bg) 60%, transparent 100%)' }} />
 
         <form onSubmit={handleComment} className="relative px-3 pb-3 pt-1">
           <div
             className="flex items-center gap-3 px-2 py-2 rounded-2xl"
             style={{
-              background: 'white',
+              background: 'var(--card-bg)',
               boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)',
             }}
           >
-            {/* Avatar con borde */}
             <div className="flex-shrink-0 p-0.5 rounded-full"
               style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
               <Avatar name={user?.name} src={user?.avatar?.url} size="sm" />
@@ -770,7 +1023,6 @@ const ReportDetailPage = () => {
               />
             </div>
 
-            {/* Botón enviar */}
             <motion.button
               type="submit"
               whileTap={{ scale: 0.85 }}
@@ -791,6 +1043,44 @@ const ReportDetailPage = () => {
           </div>
         </form>
       </div>
+
+      <AnimatePresence>
+        {confirmDeleteComment && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-end justify-center">
+            <motion.div
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 80, opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="rounded-t-3xl p-6 w-full max-w-lg mx-auto"
+              style={{ background: 'var(--card-bg)', paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' }}
+            >
+              <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--text-3)' }} />
+              <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <HiTrash className="text-red-500 text-2xl" />
+              </div>
+              <h3 className="text-base font-extrabold text-center mb-1" style={{ color: 'var(--text-1)' }}>¿Borrar comentario?</h3>
+              <p className="text-sm text-center mb-6" style={{ color: 'var(--text-2)' }}>Esta acción no se puede deshacer.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDeleteComment(null)}
+                  className="flex-1 py-3.5 rounded-2xl text-sm font-bold"
+                  style={{ background: 'var(--input-bg)', color: 'var(--text-2)', border: '1.5px solid var(--border)' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmDeleteComment}
+                  className="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-bold text-sm"
+                  style={{ boxShadow: '0 4px 16px rgba(239,68,68,0.35)' }}
+                >
+                  Sí, borrar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

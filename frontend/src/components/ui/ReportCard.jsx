@@ -4,6 +4,7 @@ import { HiLocationMarker, HiHeart, HiChatAlt, HiEye } from 'react-icons/hi';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import reportService from '../../services/reportService';
+import LazyImage from './LazyImage';
 import useAuthStore from '../../store/authStore';
 import { useState } from 'react';
 
@@ -77,6 +78,10 @@ const ReportCard = ({ report, onRefetch }) => {
     finally { setLikeLoading(false); }
   };
 
+  const daysPending = (['pending', 'inProgress'].includes(report.status))
+    ? Math.floor((Date.now() - new Date(report.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+
   return (
     <motion.div
       whileTap={{ scale: 0.983 }}
@@ -90,15 +95,23 @@ const ReportCard = ({ report, onRefetch }) => {
       {/* ── Imagen ── */}
       {report.images?.length > 0 && (
         <div className="relative h-52 bg-gray-100">
-          <img
+          <LazyImage
             src={report.images[0].url}
             alt={report.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full"
           />
           {/* Gradiente oscuro para legibilidad de badges */}
           <div className="absolute inset-0"
             style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, transparent 35%, rgba(0,0,0,0.55) 100%)' }}
           />
+
+          {/* Badge días sin resolver */}
+          {daysPending !== null && daysPending >= 3 && (
+            <div className="absolute top-3 left-3 z-10 flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full"
+              style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', color: daysPending >= 30 ? '#fca5a5' : daysPending >= 14 ? '#fdba74' : '#fde68a' }}>
+              ⏱ {daysPending}d
+            </div>
+          )}
 
           {/* Badge de estado — arriba derecha */}
           <div className="absolute top-3 right-3">

@@ -5,8 +5,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-/* Importar fuente Inter de Google Fonts */
-
 
 /* ─── Variables CSS globales ──────────────────────────────────────────────── */
 :root {
@@ -16,6 +14,24 @@
   --color-warning: #d97706;
   --nav-height: 64px;
   --bottom-nav-height: 70px;
+  /* Superficies */
+  --page-bg:   #f8fafc;
+  --card-bg:   #ffffff;
+  --input-bg:  #f9fafb;
+  --text-1:    #111827;
+  --text-2:    #6b7280;
+  --text-3:    #9ca3af;
+  --border:    rgba(0,0,0,0.05);
+}
+
+html.dark {
+  --page-bg:   #0f172a;
+  --card-bg:   #1e293b;
+  --input-bg:  #1e293b;
+  --text-1:    #f1f5f9;
+  --text-2:    #94a3b8;
+  --text-3:    #64748b;
+  --border:    rgba(255,255,255,0.07);
 }
 
 /* ─── Reset y base ────────────────────────────────────────────────────────── */
@@ -46,10 +62,57 @@ body {
 }
 
 /* Modo oscuro */
+html.dark body,
 body.dark {
-  background-color: #0f172a;
-  color: #f1f5f9;
+  background-color: var(--page-bg);
+  color: var(--text-1);
 }
+
+/* ─── Dark mode: superficies principales ─────────────────────────────────── */
+html.dark .bg-white          { background-color: var(--card-bg) !important; }
+html.dark .bg-white\/95      { background-color: rgba(30,41,59,0.97) !important; }
+html.dark .bg-white\/90      { background-color: rgba(30,41,59,0.92) !important; }
+html.dark .bg-white\/10,
+html.dark .bg-white\/12,
+html.dark .bg-white\/15,
+html.dark .bg-white\/20      { background-color: rgba(255,255,255,0.07) !important; }
+
+html.dark .bg-gray-50        { background-color: #0f172a !important; }
+html.dark .bg-gray-50\/80    { background-color: rgba(15,23,42,0.85) !important; }
+html.dark .bg-gray-100       { background-color: #1e293b !important; }
+html.dark .bg-gray-200       { background-color: #334155 !important; }
+
+/* ─── Dark mode: texto ───────────────────────────────────────────────────── */
+html.dark .text-gray-900     { color: #f1f5f9 !important; }
+html.dark .text-gray-800     { color: #e2e8f0 !important; }
+html.dark .text-gray-700     { color: #cbd5e1 !important; }
+html.dark .text-gray-600     { color: #94a3b8 !important; }
+html.dark .text-gray-500     { color: #64748b !important; }
+html.dark .text-gray-400     { color: #475569 !important; }
+html.dark .text-gray-300     { color: #334155 !important; }
+
+/* ─── Dark mode: bordes ──────────────────────────────────────────────────── */
+html.dark .border-gray-50    { border-color: rgba(255,255,255,0.05) !important; }
+html.dark .border-gray-100   { border-color: rgba(255,255,255,0.07) !important; }
+html.dark .border-gray-200   { border-color: rgba(255,255,255,0.10) !important; }
+html.dark .divide-gray-50 > * + *,
+html.dark .divide-gray-100 > * + * { border-color: rgba(255,255,255,0.07) !important; }
+
+/* ─── Dark mode: labels / componentes personalizados ─────────────────────── */
+html.dark .input-label { color: #cbd5e1 !important; }
+html.dark .card { background-color: var(--card-bg) !important; border-color: rgba(255,255,255,0.08) !important; }
+html.dark .skeleton { background-color: #334155 !important; }
+
+/* ─── Dark mode: inputs ──────────────────────────────────────────────────── */
+html.dark input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+html.dark textarea,
+html.dark select {
+  background-color: var(--input-bg) !important;
+  color: var(--text-1) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+html.dark input::placeholder,
+html.dark textarea::placeholder { color: #475569 !important; }
 
 /* ─── Scrollbar personalizada ─────────────────────────────────────────────── */
 ::-webkit-scrollbar {
@@ -77,9 +140,6 @@ body.dark {
   /* Tarjeta moderna */
   .card {
     @apply bg-white rounded-2xl shadow-card p-4 border border-gray-100;
-  }
-  .dark .card {
-    @apply bg-dark-800 border-gray-700;
   }
 
   /* Botón primario */
@@ -114,16 +174,10 @@ body.dark {
            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
            transition-all duration-200;
   }
-  .dark .input-field {
-    @apply bg-dark-800 border-gray-600 text-gray-100 placeholder-gray-500;
-  }
 
   /* Label de formulario */
   .input-label {
     @apply block text-sm font-medium text-gray-700 mb-1.5;
-  }
-  .dark .input-label {
-    @apply text-gray-300;
   }
 
   /* Badge de estado */
@@ -144,9 +198,6 @@ body.dark {
   /* Skeleton loader */
   .skeleton {
     @apply animate-pulse bg-gray-200 rounded-xl;
-  }
-  .dark .skeleton {
-    @apply bg-gray-700;
   }
 }
 
@@ -205,4 +256,14 @@ input, textarea, select {
 /* ─── Bloquear zoom por gestos touch ────────────────────────────────────── */
 html {
   touch-action: pan-x pan-y;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes imgShimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }

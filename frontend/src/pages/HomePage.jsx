@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HiSearch, HiBell, HiFire, HiRefresh } from 'react-icons/hi';
+import { HiAdjustments } from 'react-icons/hi';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 import reportService from '../services/reportService';
 import notificationService from '../services/notificationService';
 import useAuthStore from '../store/authStore';
@@ -12,6 +15,14 @@ import usePullToRefresh from '../hooks/usePullToRefresh';
 import ErrorScreen from '../components/ui/ErrorScreen';
 
 const PAGE_SIZE = 10;
+
+const HISTORY_KEY = 'vc_search_history';
+const getHistory = () => { try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; } };
+const saveHistory = (term) => {
+  if (!term?.trim()) return;
+  const updated = [term, ...getHistory().filter(h => h !== term)].slice(0, 5);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+};
 
 const FILTERS = [
   {
@@ -70,7 +81,14 @@ const HomePage = () => {
   const [search, setSearch]           = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [workTypeFilter, setWorkTypeFilter] = useState('');
+  const [sortBy, setSortBy] = useState('-createdAt');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [searchHistory, setSearchHistory] = useState(getHistory);
+  const [newReportsAvailable, setNewReportsAvailable] = useState(false);
   const sentinelRef = useRef(null);
+  const shownNewestRef = useRef(null);
 
   const { data: notifData } = useQuery({
     queryKey: ['notif-count'],
@@ -82,6 +100,7 @@ const HomePage = () => {
   const handlePullRefresh = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: ['reports'] });
     await queryClient.invalidateQueries({ queryKey: ['notif-count'] });
+    await queryClient.invalidateQueries({ queryKey: ['reports-trending'] });
   }, [queryClient]);
 
   const { pullY, refreshing } = usePullToRefresh(handlePullRefresh);
@@ -89,11 +108,13 @@ const HomePage = () => {
   const {
     data, isLoading, isError, fetchNextPage, hasNextPage, isFetchingNextPage, refetch,
   } = useInfiniteQuery({
-    queryKey: ['reports', statusFilter, search],
+    queryKey: ['reports', statusFilter, search, workTypeFilter, sortBy],
     queryFn: ({ pageParam = 1 }) => reportService.getAll({
       page: pageParam, limit: PAGE_SIZE,
-      ...(statusFilter && { status: statusFilter }),
-      ...(search       && { search }),
+      ...(statusFilter   && { status: statusFilter }),
+      ...(search         && { search }),
+      ...(workTypeFilter && { workType: workTypeFilter }),
+      sort: sortBy,
     }),
     getNextPageParam: (lastPage) => {
       const { page, pages } = lastPage.pagination || {};
@@ -102,21 +123,50 @@ const HomePage = () => {
     initialPageParam: 1,
   });
 
+  const { data: trendingData } = useQuery({
+    queryKey: ['reports-trending'],
+    queryFn: () => reportService.getAll({ limit: 8, sort: '-likesCount' }),
+    staleTime: 1000 * 60 * 10,
+  });
+  const trending = trendingData?.reports?.filter(r => r.likesCount > 0) || [];
+
   const reports      = data?.pages.flatMap(p => p.reports) || [];
   const totalReports = data?.pages[0]?.pagination?.total ?? reports.length;
   const greeting     = getGreeting();
   const firstName    = user?.name?.split(' ')[0] || 'Usuario';
   const avatarGradient = getAvatarGradient(user?.name);
 
-  // Debounce: busca automáticamente 500ms después de que el usuario deja de escribir
   useEffect(() => {
-    const timer = setTimeout(() => setSearch(searchInput), 500);
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      if (searchInput.trim().length >= 2) {
+        saveHistory(searchInput.trim());
+        setSearchHistory(getHistory());
+      }
+    }, 500);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
   const handleSearch = (e) => {
     e.preventDefault();
+    if (searchInput.trim()) {
+      saveHistory(searchInput.trim());
+      setSearchHistory(getHistory());
+    }
     setSearch(searchInput);
+    setShowHistory(false);
+  };
+
+  const applyHistorySearch = (term) => {
+    setSearchInput(term);
+    setSearch(term);
+    setShowHistory(false);
+  };
+
+  const clearHistory = () => {
+    localStorage.removeItem(HISTORY_KEY);
+    setSearchHistory([]);
+    setShowHistory(false);
   };
 
   const handleIntersection = useCallback((entries) => {
@@ -131,6 +181,35 @@ const HomePage = () => {
     observer.observe(el);
     return () => observer.disconnect();
   }, [handleIntersection]);
+
+  useEffect(() => {
+    if (reports.length > 0 && !shownNewestRef.current) {
+      shownNewestRef.current = reports[0]._id;
+    }
+  }, [reports]);
+
+  useEffect(() => {
+    if (search || statusFilter || workTypeFilter) return;
+    const check = async () => {
+      if (!shownNewestRef.current) return;
+      try {
+        const res = await reportService.getAll({ limit: 1, sort: '-createdAt' });
+        const latest = res.reports?.[0];
+        if (latest && latest._id !== shownNewestRef.current) {
+          setNewReportsAvailable(true);
+        }
+      } catch {}
+    };
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, [search, statusFilter, workTypeFilter]);
+
+  const handleRefreshNew = async () => {
+    setNewReportsAvailable(false);
+    shownNewestRef.current = null;
+    await queryClient.invalidateQueries({ queryKey: ['reports'] });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const activeFilter = FILTERS.find(f => f.value === statusFilter) || FILTERS[0];
 
@@ -158,13 +237,40 @@ const HomePage = () => {
         )}
       </AnimatePresence>
 
-      {/* ══════════════════════════════════════════
-          HEADER — gradiente azul premium
-      ══════════════════════════════════════════ */}
+      {/* ── Banner nuevos reportes ── */}
+      <AnimatePresence>
+        {newReportsAvailable && (
+          <motion.div
+            initial={{ opacity: 0, y: -60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -60 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="fixed top-4 left-0 right-0 z-40 flex justify-center pointer-events-none px-4"
+          >
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={handleRefreshNew}
+              className="pointer-events-auto flex items-center gap-2.5 px-5 py-3 rounded-2xl text-white text-sm font-bold shadow-xl"
+              style={{
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+                boxShadow: '0 8px 32px rgba(37,99,235,0.5)',
+              }}
+            >
+              <motion.span
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              >
+                ↑
+              </motion.span>
+              Nuevos reportes disponibles
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="relative overflow-hidden" style={{
         background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
       }}>
-        {/* Luces de fondo */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full"
             style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)' }} />
@@ -176,10 +282,8 @@ const HomePage = () => {
 
         <div className="relative px-5 pt-14 pb-6">
 
-          {/* Fila: avatar + nombre + campana */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3.5">
-              {/* Avatar */}
               <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center shadow-lg flex-shrink-0 overflow-hidden`}
                 style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.25)' }}>
                 {user?.avatar?.url
@@ -197,48 +301,94 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Campana */}
-            <button
-              onClick={() => navigate('/notifications')}
-              className="relative w-11 h-11 rounded-2xl flex items-center justify-center active:scale-95 transition-transform flex-shrink-0"
-              style={{
-                background: 'rgba(255,255,255,0.12)',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,0.18)',
-              }}
-            >
-              <HiBell className="text-white text-xl" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAdvanced(true)}
+                className="relative w-11 h-11 rounded-2xl flex items-center justify-center active:scale-95 transition-transform"
+                style={{
+                  background: (workTypeFilter || sortBy !== '-createdAt') ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                }}
+              >
+                <HiAdjustments className="text-white text-xl" />
+                {(workTypeFilter || sortBy !== '-createdAt') && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full" />
+                )}
+              </button>
+
+              <button
+                onClick={() => navigate('/notifications')}
+                className="relative w-11 h-11 rounded-2xl flex items-center justify-center active:scale-95 transition-transform"
+                style={{
+                  background: 'rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                }}
+              >
+                <HiBell className="text-white text-xl" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Barra de búsqueda con debounce */}
-          <form onSubmit={handleSearch} className="relative mb-4">
-            <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg z-10" />
-            <input
-              type="text"
-              placeholder="Buscar reportes..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full bg-white rounded-2xl pl-11 pr-10 py-3.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-base"
-              style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
-            />
-            {searchInput && (
-              <button
-                type="button"
-                onClick={() => { setSearchInput(''); setSearch(''); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center"
-              >
-                <span className="text-gray-500 text-xs font-bold leading-none">✕</span>
-              </button>
-            )}
-          </form>
+          <div className="relative mb-4">
+            <form onSubmit={handleSearch}>
+              <HiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg z-10" />
+              <input
+                type="text"
+                placeholder="Buscar reportes..."
+                value={searchInput}
+                onChange={(e) => { setSearchInput(e.target.value); if (!e.target.value) setShowHistory(true); }}
+                onFocus={() => { if (!searchInput) setShowHistory(true); }}
+                onBlur={() => setTimeout(() => setShowHistory(false), 150)}
+                className="w-full bg-white rounded-2xl pl-11 pr-10 py-3.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-base"
+                style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.18)' }}
+              />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchInput(''); setSearch(''); setShowHistory(false); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center"
+                >
+                  <span className="text-gray-500 text-xs font-bold leading-none">✕</span>
+                </button>
+              )}
+            </form>
 
-          {/* Filtros dentro del header */}
+            <AnimatePresence>
+              {showHistory && searchHistory.length > 0 && !searchInput && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-0 right-0 top-full mt-2 rounded-2xl overflow-hidden z-30"
+                  style={{ background: 'var(--card-bg)', boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06)' }}
+                >
+                  <div className="flex items-center justify-between px-4 pt-3 pb-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-3)' }}>Recientes</span>
+                    <button onClick={clearHistory} className="text-[10px] font-semibold text-blue-500">Limpiar</button>
+                  </div>
+                  {searchHistory.map((term, i) => (
+                    <button
+                      key={i}
+                      onMouseDown={() => applyHistorySearch(term)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left active:bg-gray-50 transition-colors"
+                    >
+                      <span className="text-sm" style={{ color: 'var(--text-3)' }}>🕐</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-1)' }}>{term}</span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1">
             {FILTERS.map((f) => {
               const isActive = statusFilter === f.value;
@@ -264,12 +414,52 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* ══════════════════════════════════════════
-          LISTA DE REPORTES
-      ══════════════════════════════════════════ */}
-      <div className="bg-gray-50/80 rounded-t-[28px] -mt-3 px-5 pt-5 flex flex-col gap-4">
+      {trending.length > 0 && !search && !statusFilter && !workTypeFilter && (
+        <div className="bg-gray-50/80 rounded-t-[28px] -mt-3 pt-5">
+          <div className="px-5 mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-extrabold text-gray-900 flex items-center gap-2">
+              <span className="text-base">🔥</span> Tendencias
+            </h2>
+            <span className="text-xs text-gray-400 font-medium">Más apoyados</span>
+          </div>
+          <div className="flex gap-3 px-5 overflow-x-auto scrollbar-hide pb-4">
+            {trending.map((r) => {
+              const timeAgo = formatDistanceToNow(new Date(r.createdAt), { addSuffix: true, locale: es });
+              return (
+                <motion.div
+                  key={r._id}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate(`/reports/${r._id}`)}
+                  className="flex-shrink-0 w-52 bg-white rounded-3xl overflow-hidden cursor-pointer"
+                  style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.10)', border: '1px solid rgba(0,0,0,0.05)' }}
+                >
+                  {r.images?.length > 0 ? (
+                    <div className="h-28 bg-gray-100 relative overflow-hidden">
+                      <img src={r.images[0].url} alt={r.title} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <span className="absolute bottom-2 left-3 text-white text-[10px] font-bold flex items-center gap-1">
+                        ❤️ {r.likesCount}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="h-28 flex items-center justify-center text-4xl"
+                      style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)' }}>
+                      🏗️
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <p className="text-xs font-extrabold text-gray-900 leading-snug line-clamp-2">{r.title}</p>
+                    <p className="text-[10px] text-gray-400 mt-1 font-medium">{timeAgo}</p>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-        {/* Contador + botón limpiar */}
+      <div className={`bg-gray-50/80 px-5 pt-5 flex flex-col gap-4 ${trending.length > 0 && !search && !statusFilter && !workTypeFilter ? '' : 'rounded-t-[28px] -mt-3'}`}>
+
         {!isLoading && (
           <motion.div
             initial={{ opacity: 0, y: 6 }}
@@ -300,15 +490,12 @@ const HomePage = () => {
           </motion.div>
         )}
 
-        {/* Pantalla de error */}
         {isError && !isLoading && (
           <ErrorScreen onRetry={() => refetch()} />
         )}
 
-        {/* Skeletons carga inicial */}
         {isLoading && [0, 1, 2].map(i => <ReportCardSkeleton key={i} />)}
 
-        {/* Tarjetas */}
         <AnimatePresence>
           {reports.map((report, index) => (
             <motion.div
@@ -322,7 +509,6 @@ const HomePage = () => {
           ))}
         </AnimatePresence>
 
-        {/* Sin resultados */}
         {!isLoading && reports.length === 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -351,13 +537,10 @@ const HomePage = () => {
           </motion.div>
         )}
 
-        {/* Skeleton siguiente página */}
         {isFetchingNextPage && [0, 1].map(i => <ReportCardSkeleton key={i} />)}
 
-        {/* Sentinel */}
         <div ref={sentinelRef} className="h-4" />
 
-        {/* Fin de lista */}
         {!hasNextPage && reports.length > 0 && !isLoading && (
           <div className="flex items-center gap-3 py-4">
             <div className="flex-1 h-px bg-gray-200" />
@@ -366,6 +549,100 @@ const HomePage = () => {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {showAdvanced && (
+          <div className="fixed inset-0 z-[100] flex flex-col justify-end" onClick={() => setShowAdvanced(false)}>
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+              className="relative rounded-t-3xl px-5 pt-4"
+              style={{ background: 'var(--card-bg)', maxHeight: '85vh', overflowY: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: 'var(--text-3)' }} />
+
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-base font-extrabold" style={{ color: 'var(--text-1)' }}>Filtros avanzados</h3>
+                {(workTypeFilter || sortBy !== '-createdAt') && (
+                  <span className="text-[10px] font-bold text-blue-500 bg-blue-500/10 px-2.5 py-1 rounded-full">Activo</span>
+                )}
+              </div>
+
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--text-3)' }}>Ordenar por</p>
+              <div className="grid grid-cols-3 gap-2 mb-6">
+                {[
+                  { label: 'Recientes', value: '-createdAt', icon: '🕐' },
+                  { label: 'Más votados', value: '-likesCount', icon: '❤️' },
+                  { label: 'Más vistos', value: '-viewsCount', icon: '👁️' },
+                ].map(s => {
+                  const active = sortBy === s.value;
+                  return (
+                    <button key={s.value} onClick={() => setSortBy(s.value)}
+                      className="py-3 rounded-2xl flex flex-col items-center gap-1.5 text-xs font-bold transition-all"
+                      style={active
+                        ? { background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }
+                        : { background: 'var(--input-bg)', color: 'var(--text-2)', border: '1.5px solid var(--border)' }
+                      }>
+                      <span className="text-lg leading-none">{s.icon}</span>
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--text-3)' }}>Tipo de obra</p>
+              <div className="flex flex-wrap gap-2 mb-7">
+                {[
+                  { value: '', label: 'Todos' },
+                  { value: 'road', label: '🛣️ Vía' },
+                  { value: 'sidewalk', label: '🚶 Andén' },
+                  { value: 'park', label: '🌳 Parque' },
+                  { value: 'building', label: '🏢 Edificio' },
+                  { value: 'drainage', label: '🔧 Tubería' },
+                  { value: 'lighting', label: '💡 Alumbrado' },
+                  { value: 'bridge', label: '🌉 Puente' },
+                  { value: 'water', label: '🚰 Acueducto' },
+                  { value: 'other', label: '⚙️ Otro' },
+                ].map(t => {
+                  const active = workTypeFilter === t.value;
+                  return (
+                    <button key={t.value} onClick={() => setWorkTypeFilter(t.value)}
+                      className="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all"
+                      style={active
+                        ? { background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: '#fff', boxShadow: '0 3px 10px rgba(37,99,235,0.3)' }
+                        : { background: 'var(--input-bg)', color: 'var(--text-2)', border: '1.5px solid var(--border)' }
+                      }>
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setWorkTypeFilter(''); setSortBy('-createdAt'); }}
+                  className="flex-1 py-3.5 rounded-2xl text-sm font-bold transition-all"
+                  style={{ background: 'var(--input-bg)', color: 'var(--text-2)', border: '1.5px solid var(--border)' }}
+                >
+                  Limpiar
+                </button>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setShowAdvanced(false)}
+                  className="flex-1 py-3.5 rounded-2xl text-white font-bold text-sm"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', boxShadow: '0 4px 16px rgba(37,99,235,0.35)' }}
+                >
+                  Aplicar
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

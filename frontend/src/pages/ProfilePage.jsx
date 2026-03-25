@@ -5,8 +5,9 @@ import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   HiMail, HiLocationMarker, HiPencil,
-  HiLogout, HiClipboardList, HiCheck, HiChevronRight, HiBell, HiCamera, HiChatAlt
+  HiLogout, HiClipboardList, HiCheck, HiChevronRight, HiBell, HiCamera, HiChatAlt, HiMoon, HiSun
 } from 'react-icons/hi';
+import useTheme from '../hooks/useTheme';
 import useAuthStore from '../store/authStore';
 import authService from '../services/authService';
 import reportService from '../services/reportService';
@@ -34,9 +35,11 @@ const getGradient = (name = '') =>
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, token, updateUser, logout } = useAuthStore();
+  const { isDark, toggleTheme } = useTheme();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [profileFilter, setProfileFilter] = useState('');
   const avatarInputRef = useRef(null);
   const [form, setForm] = useState({
     name: user?.name || '',
@@ -58,9 +61,12 @@ const ProfilePage = () => {
   });
   const unreadCount = notifData?.count || 0;
 
-  const myReports = data?.reports?.filter(
+  const allMyReports = data?.reports?.filter(
     r => r.author?._id === user?.id || r.author?.id === user?.id
   ) || [];
+  const myReports = profileFilter
+    ? allMyReports.filter(r => r.status === profileFilter)
+    : allMyReports;
 
   const stats = {
     total:      myReports.length,
@@ -116,9 +122,8 @@ const ProfilePage = () => {
   const firstName = user?.name?.split(' ')[0] || 'Usuario';
 
   return (
-    <div className="min-h-screen pb-32" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-32" style={{ background: 'var(--page-bg)' }}>
 
-      {/* ── Header ── */}
       <div className="relative overflow-hidden" style={{
         background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
       }}>
@@ -130,7 +135,6 @@ const ProfilePage = () => {
         </div>
 
         <div className="relative px-5 pt-14 pb-8">
-          {/* Fila título + editar */}
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-white text-2xl font-extrabold tracking-tight">Mi Perfil</h1>
@@ -152,9 +156,7 @@ const ProfilePage = () => {
             </motion.button>
           </div>
 
-          {/* Avatar + info */}
           <div className="flex items-center gap-4">
-            {/* Avatar con botón de cámara */}
             <div className="relative flex-shrink-0">
               <input
                 ref={avatarInputRef}
@@ -182,7 +184,6 @@ const ProfilePage = () => {
                     </span>
                   </div>
                 )}
-                {/* Overlay cámara */}
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 active:opacity-100 transition-opacity rounded-3xl">
                   {avatarLoading ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -191,7 +192,6 @@ const ProfilePage = () => {
                   )}
                 </div>
               </motion.button>
-              {/* Indicador de cámara siempre visible */}
               <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center pointer-events-none"
                 style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', border: '2px solid rgba(15,23,42,1)' }}>
                 {avatarLoading ? (
@@ -221,7 +221,6 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Stats en header */}
           <div className="grid grid-cols-4 gap-2 mt-6">
             {[
               { label: 'Total',      value: stats.total,      color: 'rgba(255,255,255,0.15)', icon: '📊' },
@@ -238,7 +237,6 @@ const ProfilePage = () => {
             ))}
           </div>
 
-          {/* Barra de tasa de resolución */}
           {stats.total > 0 && (
             <div className="mt-4 rounded-2xl p-3"
               style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>
@@ -261,12 +259,11 @@ const ProfilePage = () => {
           )}
         </div>
 
-        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
       <div className="px-4 -mt-1 flex flex-col gap-3">
 
-        {/* ── Información de contacto (edit mode) ── */}
         {editing && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -322,7 +319,6 @@ const ProfilePage = () => {
           </motion.div>
         )}
 
-        {/* ── Info (view mode) ── */}
         {!editing && (user?.city || user?.phone) && (
           <div className="bg-white rounded-3xl p-5"
             style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
@@ -348,17 +344,39 @@ const ProfilePage = () => {
           </div>
         )}
 
-        {/* ── Mis Reportes ── */}
         <div className="bg-white rounded-3xl overflow-hidden"
           style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
-          <div className="px-5 py-4 flex items-center justify-between border-b border-gray-50">
-            <h2 className="font-extrabold text-gray-900 text-sm flex items-center gap-2">
-              <HiClipboardList className="text-blue-500 text-base" />
-              Mis Reportes
-            </h2>
-            <span className="text-xs text-gray-400 font-semibold bg-gray-50 px-2.5 py-1 rounded-full">
-              {myReports.length}
-            </span>
+          <div className="px-5 pt-4 pb-3 border-b border-gray-50">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                <HiClipboardList className="text-blue-500 text-base" />
+                Mis Reportes
+              </h2>
+              <span className="text-xs text-gray-400 font-semibold" style={{ color: 'var(--text-3)' }}>
+                {myReports.length} de {allMyReports.length}
+              </span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5">
+              {[
+                { value: '', label: 'Todos' },
+                { value: 'pending', label: '⏳ Pendiente' },
+                { value: 'inProgress', label: '🔧 En curso' },
+                { value: 'resolved', label: '✅ Resuelto' },
+                { value: 'rejected', label: '❌ Rechazado' },
+              ].map(f => (
+                <button
+                  key={f.value}
+                  onClick={() => setProfileFilter(f.value)}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                  style={profileFilter === f.value
+                    ? { background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', color: '#fff' }
+                    : { background: 'var(--input-bg)', color: 'var(--text-2)', border: '1.5px solid var(--border)' }
+                  }
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {myReports.length === 0 ? (
@@ -425,7 +443,6 @@ const ProfilePage = () => {
           )}
         </div>
 
-        {/* ── Logros y badges ── */}
         {(() => {
           const BADGES = [
             { icon: '🌱', label: 'Primer reporte',    desc: 'Publicaste tu primer reporte',  earned: stats.total >= 1  },
@@ -458,7 +475,6 @@ const ProfilePage = () => {
                 </div>
               ) : (
                 <>
-                  {/* Obtenidos */}
                   <div className="grid grid-cols-4 gap-3 mb-4">
                     {earned.map((b, i) => (
                       <motion.div
@@ -478,7 +494,6 @@ const ProfilePage = () => {
                     ))}
                   </div>
 
-                  {/* Próximos por desbloquear */}
                   {locked.length > 0 && (
                     <>
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Por desbloquear</p>
@@ -504,10 +519,7 @@ const ProfilePage = () => {
           );
         })()}
 
-        {/* ── Accesos rápidos ── */}
         <div className="flex flex-col gap-2.5">
-
-          {/* Mensajes */}
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate(user?.role === 'admin' ? '/admin/messages' : '/messages')}
@@ -527,7 +539,6 @@ const ProfilePage = () => {
             <HiChevronRight className="text-gray-300 text-lg flex-shrink-0" />
           </motion.button>
 
-          {/* Notificaciones */}
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/notifications')}
@@ -551,7 +562,6 @@ const ProfilePage = () => {
             <HiChevronRight className="text-gray-300 text-lg flex-shrink-0" />
           </motion.button>
 
-          {/* Panel Admin */}
           {user?.role === 'admin' && (
             <motion.button
               whileTap={{ scale: 0.98 }}
@@ -574,7 +584,32 @@ const ProfilePage = () => {
           )}
         </div>
 
-        {/* ── Cerrar sesión ── */}
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={toggleTheme}
+          className="bg-white rounded-3xl px-5 py-4 flex items-center gap-3 w-full text-left"
+          style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}
+        >
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: isDark ? 'linear-gradient(135deg, #1e3a8a, #2563eb)' : 'linear-gradient(135deg, #fbbf24, #f59e0b)' }}>
+            {isDark ? <HiMoon className="text-white text-xl" /> : <HiSun className="text-white text-xl" />}
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-bold text-gray-900">Apariencia</p>
+            <p className="text-xs text-gray-400 mt-0.5">{isDark ? 'Modo oscuro activo' : 'Modo claro activo'}</p>
+          </div>
+          <div
+            className="w-12 h-6 rounded-full flex items-center transition-all duration-300 flex-shrink-0 px-0.5"
+            style={{ background: isDark ? '#2563eb' : '#e5e7eb' }}
+          >
+            <motion.div
+              className="w-5 h-5 bg-white rounded-full shadow-sm"
+              animate={{ x: isDark ? 24 : 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+            />
+          </div>
+        </motion.button>
+
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={handleLogout}

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { HiCheck, HiLockClosed, HiX, HiPencil } from 'react-icons/hi';
+import haptic from '../utils/haptic';
 import { useNavigate } from 'react-router-dom';
 import petitionService from '../services/petitionService';
 import useAuthStore from '../store/authStore';
@@ -338,7 +339,7 @@ const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
           {petition.isOpen && !alreadySigned && (
             <motion.button
               whileTap={{ scale: 0.97 }}
-              onClick={() => onSign(petition)}
+              onClick={() => { haptic.sign(); onSign(petition); }}
               className="flex-1 py-3 rounded-2xl text-white text-sm font-bold"
               style={{
                 background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
@@ -476,9 +477,8 @@ const PetitionsPage = () => {
 
   return (
     <>
-      <div className="min-h-screen pb-24" style={{ background: '#f8fafc' }}>
+      <div className="min-h-screen pb-24" style={{ background: 'var(--page-bg)' }}>
 
-        {/* ── Header ── */}
         <div className="relative overflow-hidden" style={{
           background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
         }}>
@@ -497,7 +497,6 @@ const PetitionsPage = () => {
                 : 'No hay peticiones activas'}
             </p>
 
-            {/* Info card */}
             <div className="mt-5 rounded-2xl p-4 flex items-start gap-3"
               style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.15)' }}>
               <span className="text-2xl flex-shrink-0">✍️</span>
@@ -511,32 +510,73 @@ const PetitionsPage = () => {
             </div>
           </div>
 
-          <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+          <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
         </div>
 
-        {/* ── Lista ── */}
         <div className="px-4 -mt-1 flex flex-col gap-3">
-          {isLoading && [1, 2].map(i => (
-            <div key={i} className="bg-white rounded-3xl h-40 animate-pulse"
-              style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }} />
+          {isLoading && [1, 2, 3].map(i => (
+            <div key={i} className="bg-white rounded-3xl p-5 animate-pulse"
+              style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)' }}>
+              <div className="flex gap-2 mb-3">
+                <div className="h-6 w-20 bg-gray-100 rounded-full" />
+              </div>
+              <div className="h-5 w-4/5 bg-gray-100 rounded-xl mb-1.5" />
+              <div className="h-4 w-2/3 bg-gray-50 rounded-xl mb-5" />
+              <div className="mb-5">
+                <div className="flex justify-between mb-2">
+                  <div className="h-4 w-24 bg-gray-100 rounded-xl" />
+                  <div className="h-4 w-20 bg-gray-50 rounded-xl" />
+                </div>
+                <div className="h-2.5 bg-gray-100 rounded-full" />
+                <div className="h-3 w-36 bg-gray-50 rounded-xl mt-2" />
+              </div>
+              <div className="flex gap-2.5">
+                <div className="flex-1 h-12 bg-gray-100 rounded-2xl" />
+                <div className="flex-1 h-12 bg-indigo-50 rounded-2xl" />
+              </div>
+            </div>
           ))}
 
           {!isLoading && petitions.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center py-24 text-center"
-            >
-              <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-5 text-5xl"
-                style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}>
-                📜
-              </div>
-              <h3 className="text-base font-extrabold text-gray-800">No hay peticiones</h3>
-              <p className="text-gray-400 text-sm mt-1.5 leading-relaxed max-w-[200px]">
-                El administrador aún no ha creado peticiones ciudadanas
-              </p>
-            </motion.div>
-          )}
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
+    className="flex flex-col items-center justify-center py-20 text-center px-6"
+  >
+    <div className="relative mb-6">
+      <div className="w-28 h-28 rounded-3xl flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%)', boxShadow: '0 20px 60px rgba(37,99,235,0.3)' }}>
+        <motion.div
+          animate={{ rotate: [0, -5, 5, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <span className="text-5xl">📜</span>
+        </motion.div>
+      </div>
+      {[0,1,2].map(i => (
+        <motion.div
+          key={i}
+          animate={{ y: [-12 - i*8, -20 - i*8, -12 - i*8], opacity: [0.6, 0, 0.6] }}
+          transition={{ duration: 2 + i * 0.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.3 }}
+          className="absolute text-sm"
+          style={{ left: `${20 + i * 25}%`, bottom: '100%' }}
+        >
+          ✍️
+        </motion.div>
+      ))}
+    </div>
+    <h3 className="text-lg font-extrabold mb-2" style={{ color: 'var(--text-1)' }}>Sin peticiones activas</h3>
+    <p className="text-sm leading-relaxed max-w-[240px]" style={{ color: 'var(--text-2)' }}>
+      El administrador publicará peticiones ciudadanas aquí para que la comunidad las firme y apoye
+    </p>
+    <div className="mt-6 flex items-center gap-2 px-4 py-2.5 rounded-2xl"
+      style={{ background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.12)' }}>
+      <span className="text-blue-500 text-sm">🏛️</span>
+      <span className="text-xs font-semibold text-blue-600">Vuelve pronto para nuevas peticiones</span>
+    </div>
+  </motion.div>
+)}
 
           {!isLoading && petitions.map(petition => (
             <PetitionCard
@@ -550,7 +590,6 @@ const PetitionsPage = () => {
         </div>
       </div>
 
-      {/* Signature bottom sheet */}
       <AnimatePresence>
         {signingPetition && (
           <SignatureModal

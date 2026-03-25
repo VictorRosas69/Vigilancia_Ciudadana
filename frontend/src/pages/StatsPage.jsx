@@ -167,7 +167,7 @@ const StatsPage = () => {
   ];
 
   if (isLoading) return (
-    <div className="min-h-screen pb-28" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-28" style={{ background: 'var(--page-bg)' }}>
       <div className="h-32 animate-pulse" style={{ background: 'linear-gradient(150deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)' }} />
       <div className="px-4 pt-4 flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-3">
@@ -179,7 +179,7 @@ const StatsPage = () => {
   );
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-28" style={{ background: 'var(--page-bg)' }}>
 
       {/* ── Header ── */}
       <div className="relative overflow-hidden" style={{
@@ -199,7 +199,7 @@ const StatsPage = () => {
           </p>
         </div>
 
-        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
       <div className="px-4 -mt-1 flex flex-col gap-4">

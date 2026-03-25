@@ -43,19 +43,19 @@ const PublicProfilePage = () => {
     : '';
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--page-bg)' }}>
       <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
     </div>
   );
 
   if (!user) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--page-bg)' }}>
       <p className="text-gray-400 text-sm">Usuario no encontrado</p>
     </div>
   );
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-28" style={{ background: 'var(--page-bg)' }}>
 
       {/* Header */}
       <div className="relative overflow-hidden" style={{
@@ -117,7 +117,7 @@ const PublicProfilePage = () => {
           </div>
         </div>
 
-        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
       {/* Reports list */}

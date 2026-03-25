@@ -16,7 +16,7 @@ const AppLayout = () => {
   const token = useAuthStore(s => s.token);
   const location = useLocation();
 
-  // ── SSE: notificaciones en tiempo real con reconexión automática ───────────
+  // SSE: real-time notifications with automatic exponential-backoff reconnection
   useEffect(() => {
     if (!token) return;
 

@@ -256,7 +256,7 @@ const AdminPage = () => {
   ];
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-24" style={{ background: 'var(--page-bg)' }}>
 
       {/* ── Header ── */}
       <div className="overflow-hidden" style={{
@@ -357,7 +357,7 @@ const AdminPage = () => {
           </div>
         </div>
 
-        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
       {/* ── Filtros de estado ── */}

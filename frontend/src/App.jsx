@@ -3,37 +3,51 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import useAuthStore from './store/authStore';
 
+import { lazy, Suspense } from 'react';
 import AppLayout from './components/layout/AppLayout';
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import CreateReportPage from './pages/CreateReportPage';
-import ReportDetailPage from './pages/ReportDetailPage';
-import MapPage from './pages/MapPage';
-import ProfilePage from './pages/ProfilePage';
-import NotificationsPage from './pages/NotificationsPage';
-import AdminPage from './pages/AdminPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import StatsPage from './pages/StatsPage';
-import PetitionsPage from './pages/PetitionsPage';
-import NotFoundPage from './pages/NotFoundPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import EditReportPage from './pages/EditReportPage';
-import PublicProfilePage from './pages/PublicProfilePage';
-import MessagesPage from './pages/MessagesPage';
-import AdminMessagesPage from './pages/AdminMessagesPage';
-import OnboardingPage from './pages/OnboardingPage';
+
+const HomePage           = lazy(() => import('./pages/HomePage'));
+const LoginPage          = lazy(() => import('./pages/LoginPage'));
+const RegisterPage       = lazy(() => import('./pages/RegisterPage'));
+const CreateReportPage   = lazy(() => import('./pages/CreateReportPage'));
+const ReportDetailPage   = lazy(() => import('./pages/ReportDetailPage'));
+const MapPage            = lazy(() => import('./pages/MapPage'));
+const ProfilePage        = lazy(() => import('./pages/ProfilePage'));
+const NotificationsPage  = lazy(() => import('./pages/NotificationsPage'));
+const AdminPage          = lazy(() => import('./pages/AdminPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const StatsPage          = lazy(() => import('./pages/StatsPage'));
+const PetitionsPage      = lazy(() => import('./pages/PetitionsPage'));
+const NotFoundPage       = lazy(() => import('./pages/NotFoundPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'));
+const EditReportPage     = lazy(() => import('./pages/EditReportPage'));
+const PublicProfilePage  = lazy(() => import('./pages/PublicProfilePage'));
+const MessagesPage       = lazy(() => import('./pages/MessagesPage'));
+const AdminMessagesPage  = lazy(() => import('./pages/AdminMessagesPage'));
+const OnboardingPage     = lazy(() => import('./pages/OnboardingPage'));
+
+const PageLoader = () => (
+  <div className="fixed inset-0 flex items-center justify-center" style={{ background: 'var(--page-bg)' }}>
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #1e3a8a, #2563eb)' }}>
+        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      </div>
+    </div>
+  </div>
+);
 import { OfflineBanner } from './components/ui/ErrorScreen';
 import { AnimatePresence } from 'framer-motion';
+import useTheme from './hooks/useTheme';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       staleTime: 1000 * 60 * 5,
-      gcTime: 1000 * 60 * 60,       // Mantener caché 1 hora
-      networkMode: 'offlineFirst',   // Mostrar datos cacheados sin internet
+      gcTime: 1000 * 60 * 60,
+      networkMode: 'offlineFirst',
     },
   },
 });
@@ -41,7 +55,6 @@ const queryClient = new QueryClient({
 const PrivateRoute = ({ children }) => {
   const token = useAuthStore((state) => state.token);
   return token ? children : <Navigate to="/login" replace />;
-  
 };
 
 const PublicRoute = ({ children }) => {
@@ -57,10 +70,10 @@ const OnboardingRoute = ({ children }) => {
 };
 
 const App = () => {
+  useTheme();
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        {/* Banner global sin conexión */}
         <AnimatePresence><OfflineBanner /></AnimatePresence>
 
         <Toaster
@@ -79,22 +92,17 @@ const App = () => {
             error:   { duration: 3500 },
           }}
         />
+        <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Onboarding (solo primera vez) */}
           <Route path="/onboarding" element={<OnboardingRoute><OnboardingPage /></OnboardingRoute>} />
 
-          {/* Rutas públicas */}
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          
 
-
-          {/* Panel web de administración (sin layout móvil) */}
           <Route path="/dashboard" element={<PrivateRoute><AdminDashboardPage /></PrivateRoute>} />
 
-          {/* Rutas privadas con layout */}
           <Route path="/" element={<PrivateRoute><AppLayout /></PrivateRoute>}>
             <Route index element={<HomePage />} />
             <Route path="map" element={<MapPage />} />
@@ -111,9 +119,9 @@ const App = () => {
             <Route path="admin/messages" element={<AdminMessagesPage />} />
           </Route>
 
-          {/* Página 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </QueryClientProvider>
   );

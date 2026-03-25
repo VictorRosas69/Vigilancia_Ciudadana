@@ -166,7 +166,7 @@ const NotificationsPage = () => {
   });
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-28" style={{ background: 'var(--page-bg)' }}>
 
       {/* ── Header ── */}
       <div className="relative overflow-hidden" style={{
@@ -202,7 +202,7 @@ const NotificationsPage = () => {
           </div>
         </div>
 
-        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
       {/* ── Contenido ── */}
@@ -269,21 +269,49 @@ const NotificationsPage = () => {
 
         {/* Vacío */}
         {!isLoading && !isError && notifications.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-24 text-center"
-          >
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-5"
-              style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}>
-              <HiBell className="text-blue-400 text-5xl" />
-            </div>
-            <h3 className="text-base font-extrabold text-gray-800">Sin notificaciones</h3>
-            <p className="text-gray-400 text-sm mt-1.5 leading-relaxed max-w-[200px]">
-              Te avisaremos cuando haya novedades en tus reportes
-            </p>
-          </motion.div>
-        )}
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
+    className="flex flex-col items-center justify-center py-20 text-center px-6"
+  >
+    {/* Floating icon */}
+    <div className="relative mb-6">
+      <div className="w-28 h-28 rounded-3xl flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', boxShadow: '0 20px 60px rgba(37,99,235,0.35)' }}>
+        <motion.div
+          animate={{ y: [0, -8, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <HiBell className="text-white text-5xl" />
+        </motion.div>
+      </div>
+      {/* Decorative rings */}
+      <motion.div
+        animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0, 0.3] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute inset-0 rounded-3xl border-2 border-blue-400"
+      />
+      <motion.div
+        animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0, 0.15] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut', delay: 0.4 }}
+        className="absolute inset-0 rounded-3xl border border-blue-300"
+      />
+    </div>
+    <h3 className="text-lg font-extrabold mb-2" style={{ color: 'var(--text-1)' }}>Sin notificaciones</h3>
+    <p className="text-sm leading-relaxed max-w-[220px]" style={{ color: 'var(--text-2)' }}>
+      Cuando alguien reaccione a tus reportes o cambie su estado, te avisaremos aquí
+    </p>
+    <motion.div
+      animate={{ opacity: [0.5, 1, 0.5] }}
+      transition={{ duration: 2, repeat: Infinity }}
+      className="mt-5 flex items-center gap-2 text-xs font-semibold text-blue-500"
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block" />
+      Monitoreando en tiempo real
+    </motion.div>
+  </motion.div>
+)}
         </div>{/* end inner px-4 div */}
       </div>
     </div>
