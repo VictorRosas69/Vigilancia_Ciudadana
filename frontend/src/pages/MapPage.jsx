@@ -251,10 +251,12 @@ const MapPage = () => {
 
   const cityName = reportsWithCoords[0]?.location?.city || '';
 
-  return (
-    <div className="fixed inset-0 pb-16">
+  const mapHeight = 'calc(100dvh - 64px)';
 
-      <div className="absolute inset-0">
+  return (
+    <div className="fixed inset-0">
+
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: mapHeight }}>
         {!MapComponents ? (
           <div className="h-full flex items-center justify-center bg-gray-100">
             <div className="flex flex-col items-center gap-3">
@@ -266,7 +268,7 @@ const MapPage = () => {
           <MapComponents.MapContainer
             center={DEFAULT_CENTER}
             zoom={12}
-            style={{ height: '100%', width: '100%' }}
+            style={{ height: mapHeight, width: '100%' }}
             zoomControl={false}
           >
             <MapComponents.TileLayer
