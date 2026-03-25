@@ -128,24 +128,31 @@ const MapPage = () => {
       const { MapContainer, TileLayer, useMap } = await import('react-leaflet');
       delete L.default.Icon.Default.prototype._getIconUrl;
 
-      // Centra el mapa en los reportes cuando cargan por primera vez
+      // Fuerza recálculo de tamaño y centra en los reportes
       const CenterOnReports = ({ reports }) => {
         const map = useMap();
         const centered = useRef(false);
         useEffect(() => {
+          // Siempre invalidar tamaño al montar (fix tiles grises)
+          setTimeout(() => map.invalidateSize(), 100);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+        useEffect(() => {
           if (centered.current || reports.length === 0) return;
           centered.current = true;
-          if (reports.length === 1) {
-            map.setView(
-              [reports[0].location.coordinates[1], reports[0].location.coordinates[0]],
-              14
-            );
-          } else {
-            const bounds = L.default.latLngBounds(
-              reports.map(r => [r.location.coordinates[1], r.location.coordinates[0]])
-            );
-            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-          }
+          setTimeout(() => {
+            if (reports.length === 1) {
+              map.setView(
+                [reports[0].location.coordinates[1], reports[0].location.coordinates[0]],
+                14
+              );
+            } else {
+              const bounds = L.default.latLngBounds(
+                reports.map(r => [r.location.coordinates[1], r.location.coordinates[0]])
+              );
+              map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+            }
+          }, 150);
         // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [reports.length]);
         return null;
@@ -239,7 +246,7 @@ const MapPage = () => {
     <div className="fixed inset-0" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
 
       <div className="absolute inset-0">
-        {(!MapComponents || isLoading) ? (
+        {!MapComponents ? (
           <div className="h-full flex items-center justify-center bg-gray-100">
             <div className="flex flex-col items-center gap-3">
               <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
