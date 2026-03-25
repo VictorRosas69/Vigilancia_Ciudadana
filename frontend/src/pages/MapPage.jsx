@@ -45,11 +45,11 @@ const PRIORITY_FILTERS = [
 ];
 
 const STATUS_FILTERS = [
-  { label: 'Todos estados', value: '' },
-  { label: 'Pendiente',     value: 'pending'    },
-  { label: 'En progreso',   value: 'inProgress' },
-  { label: 'Resuelto',      value: 'resolved'   },
-  { label: 'Rechazado',     value: 'rejected'   },
+  { label: 'Todos',      value: '' },
+  { label: 'Pendiente',  value: 'pending'    },
+  { label: 'En progreso',value: 'inProgress' },
+  { label: 'Resuelto',   value: 'resolved'   },
+  { label: 'Rechazado',  value: 'rejected'   },
 ];
 
 const makePinIcon = (L, color) =>
@@ -74,20 +74,21 @@ const haversineKm = (lat1, lng1, lat2, lng2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
+const DEFAULT_CENTER = [4.6097, -74.0817]; // Bogotá
+
 const MapPage = () => {
   const navigate = useNavigate();
   const [MapComponents, setMapComponents] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [nearMeActive, setNearMeActive] = useState(false);
   const [locating, setLocating] = useState(false);
-  const mapRef = useRef(null);
   const [priorityFilter, setPriorityFilter] = useState('');
   const [statusFilter, setStatusFilter]     = useState('');
-  const [filterTab, setFilterTab]           = useState('priority'); // 'priority' | 'status'
+  const [filterTab, setFilterTab]           = useState('priority');
   const [selected, setSelected] = useState(null);
-  const [viewMode, setViewMode] = useState('pins'); // 'pins' | 'heat'
+  const [viewMode, setViewMode] = useState('pins');
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['reports-map'],
     queryFn: () => reportService.getAll({ limit: 200 }),
   });
@@ -112,7 +113,8 @@ const MapPage = () => {
     return true;
   });
 
-  const clusterKey = `${priorityFilter}|${statusFilter}`;
+  // nearMeActive incluido para que el cluster se remonte al activar "cerca de mí"
+  const clusterKey = `${priorityFilter}|${statusFilter}|${nearMeActive}`;
 
   const heatPoints = filtered.map(r => [
     r.location.coordinates[1],
@@ -125,6 +127,29 @@ const MapPage = () => {
       const L = await import('leaflet');
       const { MapContainer, TileLayer, useMap } = await import('react-leaflet');
       delete L.default.Icon.Default.prototype._getIconUrl;
+
+      // Centra el mapa en los reportes cuando cargan por primera vez
+      const CenterOnReports = ({ reports }) => {
+        const map = useMap();
+        const centered = useRef(false);
+        useEffect(() => {
+          if (centered.current || reports.length === 0) return;
+          centered.current = true;
+          if (reports.length === 1) {
+            map.setView(
+              [reports[0].location.coordinates[1], reports[0].location.coordinates[0]],
+              14
+            );
+          } else {
+            const bounds = L.default.latLngBounds(
+              reports.map(r => [r.location.coordinates[1], r.location.coordinates[0]])
+            );
+            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+          }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [reports.length]);
+        return null;
+      };
 
       const HeatLayer = ({ points }) => {
         const map = useMap();
@@ -190,7 +215,7 @@ const MapPage = () => {
             if (clusterGroup) map.removeLayer(clusterGroup);
           };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [map]); // el key del padre fuerza remount — aquí solo necesitamos [map]
+        }, [map]);
         return null;
       };
 
@@ -203,22 +228,18 @@ const MapPage = () => {
         return null;
       };
 
-      setMapComponents({ MapContainer, TileLayer, L: L.default, HeatLayer, ClusterLayer, FlyToLocation });
+      setMapComponents({ MapContainer, TileLayer, L: L.default, HeatLayer, ClusterLayer, FlyToLocation, CenterOnReports });
     };
     loadMap();
   }, []);
 
-  const center = reportsWithCoords.length > 0
-    ? [reportsWithCoords[0].location.coordinates[1], reportsWithCoords[0].location.coordinates[0]]
-    : [1.2136, -77.2811];
-
-  const cityName = reportsWithCoords[0]?.location?.city || 'tu ciudad';
+  const cityName = reportsWithCoords[0]?.location?.city || '';
 
   return (
-    <div className="fixed inset-0 pb-20">
+    <div className="fixed inset-0" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
 
       <div className="absolute inset-0">
-        {!MapComponents ? (
+        {(!MapComponents || isLoading) ? (
           <div className="h-full flex items-center justify-center bg-gray-100">
             <div className="flex flex-col items-center gap-3">
               <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
@@ -227,8 +248,8 @@ const MapPage = () => {
           </div>
         ) : (
           <MapComponents.MapContainer
-            center={center}
-            zoom={13}
+            center={DEFAULT_CENTER}
+            zoom={12}
             style={{ height: '100%', width: '100%' }}
             zoomControl={false}
           >
@@ -238,6 +259,9 @@ const MapPage = () => {
               subdomains="abcd"
               maxZoom={19}
             />
+
+            {/* Centra automáticamente en los reportes al cargar */}
+            <MapComponents.CenterOnReports reports={reportsWithCoords} />
 
             {viewMode === 'pins' && filtered.length > 0 && (
               <MapComponents.ClusterLayer
@@ -256,6 +280,7 @@ const MapPage = () => {
         )}
       </div>
 
+      {/* Header + filtros */}
       <div
         className="absolute top-0 left-0 right-0 z-[1000] px-4 pointer-events-none flex flex-col gap-2"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
@@ -277,15 +302,17 @@ const MapPage = () => {
               {nearMeActive && (
                 <span className="text-blue-500 font-semibold"> · ≤5km</span>
               )}
-              {' · '}{cityName}
+              {cityName && <span> · {cityName}</span>}
             </p>
           </div>
 
+          {/* Botón "cerca de mí" */}
           <button
             onClick={() => {
               if (nearMeActive) {
                 setNearMeActive(false);
                 setUserLocation(null);
+                setSelected(null);
                 return;
               }
               setLocating(true);
@@ -313,6 +340,7 @@ const MapPage = () => {
             )}
           </button>
 
+          {/* Toggle pines / calor */}
           <div className="flex items-center bg-gray-100 rounded-xl p-0.5 flex-shrink-0">
             <button
               onClick={() => { setViewMode('pins'); setSelected(null); }}
@@ -335,6 +363,7 @@ const MapPage = () => {
           </div>
         </div>
 
+        {/* Filtros */}
         <div className="pointer-events-auto flex flex-col gap-1.5">
           <div className="flex gap-1.5 bg-white/90 backdrop-blur-xl rounded-xl p-1 shadow"
             style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
@@ -414,8 +443,20 @@ const MapPage = () => {
             </div>
           </motion.div>
         )}
+
+        {/* Sin resultados */}
+        {MapComponents && !isLoading && filtered.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/95 backdrop-blur-xl rounded-xl px-4 py-3 shadow pointer-events-auto text-center"
+          >
+            <p className="text-sm text-gray-500 font-medium">No hay reportes con estos filtros</p>
+          </motion.div>
+        )}
       </div>
 
+      {/* Tarjeta de detalle al tocar un pin */}
       <AnimatePresence>
         {selected && viewMode === 'pins' && (
           <motion.div
@@ -423,11 +464,12 @@ const MapPage = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className="absolute bottom-24 left-0 right-0 z-[1001] px-4"
+            className="absolute left-0 right-0 z-[1001] px-4"
+            style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
           >
-            <div className="bg-white rounded-3xl p-5" style={{ boxShadow: '0 -4px 40px rgba(0,0,0,0.15)' }}>
+            <div className="bg-white rounded-3xl p-5" style={{ boxShadow: '0 -4px 40px rgba(0,0,0,0.18)' }}>
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   {STATUS_CONFIG[selected.status] && (
                     <span className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${
                       selected.status === 'resolved'   ? 'bg-green-50 text-green-700' :
@@ -448,13 +490,13 @@ const MapPage = () => {
                 </div>
                 <button
                   onClick={() => setSelected(null)}
-                  className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center"
+                  className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0"
                 >
                   <HiX className="text-gray-500 text-sm" />
                 </button>
               </div>
 
-              <h3 className="text-base font-extrabold text-gray-900 leading-snug mb-3">
+              <h3 className="text-base font-extrabold text-gray-900 leading-snug mb-3 line-clamp-2">
                 {selected.title}
               </h3>
 
