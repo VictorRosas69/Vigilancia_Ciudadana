@@ -3,6 +3,41 @@ const User = require('../models/User');
 const { cloudinary } = require('../config/cloudinary');
 const { createNotification } = require('./notificationController');
 
+// ─── SSE — mapa de clientes por reporte ───────────────────────────────────────
+const reportClients = new Map(); // reportId (string) → Set<res>
+
+const broadcastStatusChange = (reportId, payload) => {
+  const clients = reportClients.get(String(reportId));
+  if (!clients?.size) return;
+  const msg = `data: ${JSON.stringify(payload)}\n\n`;
+  clients.forEach(res => { try { res.write(msg); } catch {} });
+};
+
+// ─── SUSCRIBIR A SSE ──────────────────────────────────────────────────────────
+const subscribeToReport = (req, res) => {
+  const { id } = req.params;
+
+  res.writeHead(200, {
+    'Content-Type':  'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection':    'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders?.();
+  res.write(': connected\n\n');
+
+  if (!reportClients.has(id)) reportClients.set(id, new Set());
+  reportClients.get(id).add(res);
+
+  const keepAlive = setInterval(() => { try { res.write(':\n\n'); } catch {} }, 25000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+    const set = reportClients.get(id);
+    if (set) { set.delete(res); if (!set.size) reportClients.delete(id); }
+  });
+};
+
 // ─── CREAR REPORTE ────────────────────────────────────────────────────────────
 const createReport = async (req, res, next) => {
   try {
@@ -316,6 +351,15 @@ const updateStatus = async (req, res, next) => {
 
     res.status(200).json({ success: true, message: 'Estado actualizado', report });
 
+    // Broadcast SSE a clientes suscritos
+    broadcastStatusChange(req.params.id, {
+      type:        'status_change',
+      status:      status,
+      reportId:    req.params.id,
+      changedBy:   req.user.name,
+      changedAt:   new Date().toISOString(),
+    });
+
     // Notificar al autor del reporte sobre el cambio de estado (si no es el mismo admin)
     if (report.author && report.author._id.toString() !== req.user.id) {
       const STATUS_LABELS = {
@@ -349,4 +393,5 @@ module.exports = {
   deleteReport,
   toggleLike,
   updateStatus,
+  subscribeToReport,
 };

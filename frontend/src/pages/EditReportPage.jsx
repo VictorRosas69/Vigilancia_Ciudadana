@@ -119,13 +119,13 @@ const EditReportPage = () => {
   const selectedType = WORK_TYPES.find(t => t.value === form.workType);
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--page-bg)' }}>
       <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
     </div>
   );
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-28" style={{ background: 'var(--page-bg)' }}>
 
       {/* ── Header ── */}
       <div className="sticky top-0 z-20 overflow-hidden" style={{
@@ -152,7 +152,7 @@ const EditReportPage = () => {
           </div>
         </div>
 
-        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
       <form onSubmit={handleSubmit} className="px-5 -mt-1 flex flex-col gap-4">

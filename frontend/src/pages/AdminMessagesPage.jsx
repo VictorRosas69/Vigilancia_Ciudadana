@@ -170,7 +170,7 @@ const AdminMessagesPage = () => {
   });
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-24" style={{ background: 'var(--page-bg)' }}>
 
       {/* Header */}
       <div className="relative overflow-hidden" style={{
@@ -207,7 +207,7 @@ const AdminMessagesPage = () => {
           </div>
         </div>
 
-        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
       <div className="px-4 -mt-1 flex flex-col gap-3">

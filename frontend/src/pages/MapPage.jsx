@@ -1,6 +1,6 @@
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -65,9 +65,22 @@ const makePinIcon = (L, color) =>
     popupAnchor: [0, -48],
   });
 
+const haversineKm = (lat1, lng1, lat2, lng2) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 const MapPage = () => {
   const navigate = useNavigate();
   const [MapComponents, setMapComponents] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [nearMeActive, setNearMeActive] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const mapRef = useRef(null);
   const [priorityFilter, setPriorityFilter] = useState('');
   const [statusFilter, setStatusFilter]     = useState('');
   const [filterTab, setFilterTab]           = useState('priority'); // 'priority' | 'status'
@@ -89,10 +102,16 @@ const MapPage = () => {
   const filtered = reportsWithCoords.filter(r => {
     if (priorityFilter && r.priority !== priorityFilter) return false;
     if (statusFilter   && r.status   !== statusFilter)   return false;
+    if (nearMeActive && userLocation) {
+      const dist = haversineKm(
+        userLocation[0], userLocation[1],
+        r.location.coordinates[1], r.location.coordinates[0]
+      );
+      if (dist > 5) return false;
+    }
     return true;
   });
 
-  // Clave única para forzar remount del ClusterLayer cuando cambian los filtros
   const clusterKey = `${priorityFilter}|${statusFilter}`;
 
   const heatPoints = filtered.map(r => [
@@ -107,7 +126,6 @@ const MapPage = () => {
       const { MapContainer, TileLayer, useMap } = await import('react-leaflet');
       delete L.default.Icon.Default.prototype._getIconUrl;
 
-      // ── HeatLayer ─────────────────────────────────────────────────────────
       const HeatLayer = ({ points }) => {
         const map = useMap();
         useEffect(() => {
@@ -132,7 +150,6 @@ const MapPage = () => {
         return null;
       };
 
-      // ── ClusterLayer (pines agrupados) ────────────────────────────────────
       const ClusterLayer = ({ reports, onSelect }) => {
         const map = useMap();
         useEffect(() => {
@@ -141,7 +158,7 @@ const MapPage = () => {
 
           const init = async () => {
             await import('leaflet.markercluster');
-            if (cancelled) return; // filtro cambió antes de terminar
+            if (cancelled) return;
 
             const Lx = L.default;
             if (!Lx.markerClusterGroup) return;
@@ -177,7 +194,16 @@ const MapPage = () => {
         return null;
       };
 
-      setMapComponents({ MapContainer, TileLayer, L: L.default, HeatLayer, ClusterLayer });
+      const FlyToLocation = ({ coords }) => {
+        const map = useMap();
+        useEffect(() => {
+          if (coords) map.flyTo(coords, 14, { duration: 1.2 });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [coords?.[0], coords?.[1]]);
+        return null;
+      };
+
+      setMapComponents({ MapContainer, TileLayer, L: L.default, HeatLayer, ClusterLayer, FlyToLocation });
     };
     loadMap();
   }, []);
@@ -191,7 +217,6 @@ const MapPage = () => {
   return (
     <div className="fixed inset-0 pb-20">
 
-      {/* ── Mapa full screen ── */}
       <div className="absolute inset-0">
         {!MapComponents ? (
           <div className="h-full flex items-center justify-center bg-gray-100">
@@ -214,7 +239,6 @@ const MapPage = () => {
               maxZoom={19}
             />
 
-            {/* Pines con clustering — key fuerza remount al cambiar filtros */}
             {viewMode === 'pins' && filtered.length > 0 && (
               <MapComponents.ClusterLayer
                 key={clusterKey}
@@ -223,20 +247,19 @@ const MapPage = () => {
               />
             )}
 
-            {/* Heatmap */}
             {viewMode === 'heat' && heatPoints.length > 0 && (
               <MapComponents.HeatLayer points={heatPoints} />
             )}
+
+            {userLocation && <MapComponents.FlyToLocation coords={userLocation} />}
           </MapComponents.MapContainer>
         )}
       </div>
 
-      {/* ── Header + Filtros overlay ── */}
       <div
         className="absolute top-0 left-0 right-0 z-[1000] px-4 pointer-events-none flex flex-col gap-2"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
       >
-        {/* Header compacto */}
         <div
           className="bg-white/95 backdrop-blur-xl rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3 pointer-events-auto"
           style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}
@@ -248,14 +271,48 @@ const MapPage = () => {
             <h1 className="text-sm font-extrabold text-gray-900">Mapa de Reportes</h1>
             <p className="text-gray-400 text-xs">
               {filtered.length} reporte{filtered.length !== 1 ? 's' : ''}
-              {(priorityFilter || statusFilter) && (
+              {(priorityFilter || statusFilter || nearMeActive) && (
                 <span className="text-blue-500 font-semibold"> · filtrado</span>
+              )}
+              {nearMeActive && (
+                <span className="text-blue-500 font-semibold"> · ≤5km</span>
               )}
               {' · '}{cityName}
             </p>
           </div>
 
-          {/* Toggle Pines / Calor */}
+          <button
+            onClick={() => {
+              if (nearMeActive) {
+                setNearMeActive(false);
+                setUserLocation(null);
+                return;
+              }
+              setLocating(true);
+              navigator.geolocation.getCurrentPosition(
+                ({ coords }) => {
+                  setUserLocation([coords.latitude, coords.longitude]);
+                  setNearMeActive(true);
+                  setLocating(false);
+                  setSelected(null);
+                },
+                () => { setLocating(false); },
+                { enableHighAccuracy: true, timeout: 8000 }
+              );
+            }}
+            disabled={locating}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0 mr-1 ${
+              nearMeActive ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-gray-100 text-gray-500'
+            }`}
+            title="Cerca de mí (5 km)"
+          >
+            {locating ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <HiLocationMarker className="text-base" />
+            )}
+          </button>
+
           <div className="flex items-center bg-gray-100 rounded-xl p-0.5 flex-shrink-0">
             <button
               onClick={() => { setViewMode('pins'); setSelected(null); }}
@@ -278,9 +335,7 @@ const MapPage = () => {
           </div>
         </div>
 
-        {/* Filtros — tabs prioridad / estado */}
         <div className="pointer-events-auto flex flex-col gap-1.5">
-          {/* Selector de tipo de filtro */}
           <div className="flex gap-1.5 bg-white/90 backdrop-blur-xl rounded-xl p-1 shadow"
             style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}>
             {[
@@ -301,7 +356,6 @@ const MapPage = () => {
             ))}
           </div>
 
-          {/* Pills del filtro activo */}
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             {filterTab === 'priority'
               ? PRIORITY_FILTERS.map((f) => {
@@ -344,7 +398,6 @@ const MapPage = () => {
           </div>
         </div>
 
-        {/* Leyenda heatmap */}
         {viewMode === 'heat' && (
           <motion.div
             initial={{ opacity: 0, y: -6 }}
@@ -363,7 +416,6 @@ const MapPage = () => {
         )}
       </div>
 
-      {/* ── Bottom sheet al seleccionar un reporte (solo en modo pines) ── */}
       <AnimatePresence>
         {selected && viewMode === 'pins' && (
           <motion.div

@@ -159,7 +159,7 @@ const MessagesPage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: '#f8fafc' }}>
+    <div className="min-h-screen pb-28" style={{ background: 'var(--page-bg)' }}>
 
       {/* Header */}
       <div className="relative overflow-hidden" style={{
@@ -201,7 +201,7 @@ const MessagesPage = () => {
           </div>
         </div>
 
-        <div className="h-5 rounded-t-[28px]" style={{ background: '#f8fafc' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
       </div>
 
       <div className="px-4 -mt-1 flex flex-col gap-3">
@@ -268,21 +268,45 @@ const MessagesPage = () => {
 
         {/* Empty */}
         {!isLoading && messages.length === 0 && !showCompose && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-20 text-center"
-          >
-            <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-5 text-5xl"
-              style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}>
-              💬
-            </div>
-            <h3 className="text-base font-extrabold text-gray-800">Sin mensajes</h3>
-            <p className="text-gray-400 text-sm mt-1.5 leading-relaxed max-w-[200px]">
-              Toca el lápiz ✏️ para enviar un mensaje al administrador
-            </p>
-          </motion.div>
-        )}
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
+    className="flex flex-col items-center justify-center py-16 text-center px-6"
+  >
+    {/* Chat bubbles illustration */}
+    <div className="relative mb-6 w-28 h-28">
+      <motion.div
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute right-0 bottom-0 w-20 h-20 rounded-3xl flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)', boxShadow: '0 12px 40px rgba(37,99,235,0.35)' }}
+      >
+        <span className="text-3xl">💬</span>
+      </motion.div>
+      <motion.div
+        animate={{ y: [0, -4, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
+        className="absolute left-0 top-0 w-14 h-14 rounded-2xl flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', boxShadow: '0 8px 24px rgba(124,58,237,0.3)' }}
+      >
+        <span className="text-xl">🛡️</span>
+      </motion.div>
+    </div>
+    <h3 className="text-lg font-extrabold mb-2" style={{ color: 'var(--text-1)' }}>Buzón vacío</h3>
+    <p className="text-sm leading-relaxed max-w-[220px] mb-6" style={{ color: 'var(--text-2)' }}>
+      Envía un mensaje al administrador sobre una incidencia o consulta
+    </p>
+    <motion.button
+      whileTap={{ scale: 0.96 }}
+      onClick={() => setShowCompose(true)}
+      className="flex items-center gap-2 text-white font-bold text-sm px-6 py-3.5 rounded-2xl"
+      style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', boxShadow: '0 6px 20px rgba(37,99,235,0.38)' }}
+    >
+      <span>✏️</span> Redactar mensaje
+    </motion.button>
+  </motion.div>
+)}
 
         {/* Messages */}
         {!isLoading && messages.map(msg => (

@@ -363,7 +363,7 @@ const RegisterPage = () => {
 
           {/* reCAPTCHA */}
           <div className="rounded-2xl overflow-hidden flex items-center justify-center py-2"
-            style={{ background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+            style={{ background: 'var(--page-bg)', border: '1px solid var(--border)' }}>
             <ReCAPTCHA
               ref={recaptchaRef}
               sitekey={RECAPTCHA_SITE_KEY}
