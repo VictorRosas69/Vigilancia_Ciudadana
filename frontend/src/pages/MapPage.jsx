@@ -128,25 +128,40 @@ const MapPage = () => {
       const { MapContainer, TileLayer, useMap } = await import('react-leaflet');
       delete L.default.Icon.Default.prototype._getIconUrl;
 
-      // Fuerza recálculo de tamaño al montar y centra en los reportes una sola vez
+      // Recalcula el tamaño del mapa después de que el DOM esté estable
+      const MapResizer = () => {
+        const map = useMap();
+        useEffect(() => {
+          const t1 = setTimeout(() => map.invalidateSize(), 100);
+          const t2 = setTimeout(() => map.invalidateSize(), 500);
+          return () => { clearTimeout(t1); clearTimeout(t2); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
+        return null;
+      };
+
+      // Centra en los reportes una sola vez cuando cargan
       const CenterOnReports = ({ reports }) => {
         const map = useMap();
         const centered = useRef(false);
         useEffect(() => {
-          map.invalidateSize();
           if (centered.current || reports.length === 0) return;
           centered.current = true;
-          if (reports.length === 1) {
-            map.setView(
-              [reports[0].location.coordinates[1], reports[0].location.coordinates[0]],
-              14
-            );
-          } else {
-            const bounds = L.default.latLngBounds(
-              reports.map(r => [r.location.coordinates[1], r.location.coordinates[0]])
-            );
-            map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
-          }
+          // Delay mayor para que invalidateSize ya haya corrido
+          const t = setTimeout(() => {
+            if (reports.length === 1) {
+              map.setView(
+                [reports[0].location.coordinates[1], reports[0].location.coordinates[0]],
+                14
+              );
+            } else {
+              const bounds = L.default.latLngBounds(
+                reports.map(r => [r.location.coordinates[1], r.location.coordinates[0]])
+              );
+              map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+            }
+          }, 600);
+          return () => clearTimeout(t);
         // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [reports.length]);
         return null;
@@ -229,7 +244,7 @@ const MapPage = () => {
         return null;
       };
 
-      setMapComponents({ MapContainer, TileLayer, L: L.default, HeatLayer, ClusterLayer, FlyToLocation, CenterOnReports });
+      setMapComponents({ MapContainer, TileLayer, L: L.default, HeatLayer, ClusterLayer, FlyToLocation, CenterOnReports, MapResizer });
     };
     loadMap();
   }, []);
@@ -237,7 +252,7 @@ const MapPage = () => {
   const cityName = reportsWithCoords[0]?.location?.city || '';
 
   return (
-    <div className="fixed inset-0" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
+    <div className="fixed inset-0 pb-16">
 
       <div className="absolute inset-0">
         {!MapComponents ? (
@@ -261,7 +276,8 @@ const MapPage = () => {
               maxZoom={19}
             />
 
-            {/* Centra automáticamente en los reportes al cargar */}
+            {/* Recalcula tamaño y centra en los reportes */}
+            <MapComponents.MapResizer />
             <MapComponents.CenterOnReports reports={reportsWithCoords} />
 
             {viewMode === 'pins' && filtered.length > 0 && (
@@ -466,7 +482,7 @@ const MapPage = () => {
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             className="absolute left-0 right-0 z-[1001] px-4"
-            style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
+            style={{ bottom: '80px' }}
           >
             <div className="bg-white rounded-3xl p-5" style={{ boxShadow: '0 -4px 40px rgba(0,0,0,0.18)' }}>
               <div className="flex items-center justify-between mb-4">
