@@ -62,7 +62,7 @@ const AppLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-lg mx-auto">
+      <main className="max-w-lg mx-auto" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}
