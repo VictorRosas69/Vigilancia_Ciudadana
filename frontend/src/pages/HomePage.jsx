@@ -264,7 +264,7 @@ const HomePage = () => {
   const activeFilter = FILTERS.find(f => f.value === statusFilter) || FILTERS[0];
 
   return (
-    <div className="min-h-screen bg-gray-50/80 pb-32">
+    <div className="min-h-screen pb-32" style={{ background: 'var(--page-bg, #f9fafb)' }}>
 
       {/* ── Pull to refresh indicator ── */}
       <AnimatePresence>
@@ -463,7 +463,7 @@ const HomePage = () => {
           </div>
         </div>
 
-        <div className="h-5 rounded-t-[28px] bg-gray-50/80" />
+        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg, #f9fafb)' }} />
       </div>
 
       {/* ── Stats cards ── */}
