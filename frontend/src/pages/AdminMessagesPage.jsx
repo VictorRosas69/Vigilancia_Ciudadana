@@ -192,39 +192,41 @@ const ConvCard = ({ thread, onClick }) => {
   const lastMsg   = lastReply || { body: thread.body, createdAt: thread.createdAt };
   const hasUnread = !thread.adminRead;
   const citizen   = thread.from;
+  const avatarUrl = typeof citizen?.avatar === 'string' ? citizen.avatar : citizen?.avatar?.url;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
-      className="bg-white rounded-2xl p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+      className="rounded-2xl p-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
       style={{
-        boxShadow: hasUnread
-          ? '0 2px 16px rgba(79,70,229,0.18), 0 0 0 1.5px rgba(79,70,229,0.2)'
-          : '0 1px 8px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.04)',
+        background: hasUnread ? 'rgba(79,70,229,0.12)' : 'rgba(255,255,255,0.05)',
+        border: hasUnread ? '1px solid rgba(124,58,237,0.3)' : '1px solid rgba(255,255,255,0.07)',
+        boxShadow: hasUnread ? '0 4px 20px rgba(79,70,229,0.2)' : 'none',
       }}
     >
-      {citizen?.avatar
-        ? <img src={citizen.avatar} className="w-11 h-11 rounded-full object-cover flex-shrink-0" alt="" />
+      {avatarUrl
+        ? <img src={avatarUrl} className="w-11 h-11 rounded-full object-cover flex-shrink-0 ring-2 ring-violet-500/20" alt="" />
         : <div className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold"
-            style={{ background: gradFor(citizen?.name) }}>
+            style={{ background: gradFor(citizen?.name), boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
             {initials(citizen?.name)}
           </div>
       }
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-0.5">
-          <p className={`text-sm truncate ${hasUnread ? 'font-extrabold text-gray-900' : 'font-semibold text-gray-700'}`}>
+          <p className={`text-sm truncate ${hasUnread ? 'font-extrabold text-white' : 'font-semibold text-slate-300'}`}>
             {citizen?.name}
           </p>
-          <span className="text-[10px] text-gray-400 flex-shrink-0">{timeAgo(lastMsg.createdAt)}</span>
+          <span className="text-[10px] text-slate-500 flex-shrink-0">{timeAgo(lastMsg.createdAt)}</span>
         </div>
-        <p className="text-xs text-gray-400 truncate mb-0.5">{thread.subject}</p>
-        <p className={`text-xs truncate ${hasUnread ? 'text-violet-600 font-semibold' : 'text-gray-400'}`}>
+        <p className="text-xs text-slate-500 truncate mb-0.5">{thread.subject}</p>
+        <p className={`text-xs truncate ${hasUnread ? 'text-violet-400 font-semibold' : 'text-slate-500'}`}>
           {lastReply?.isAdmin ? '🛡️ Tú: ' : `${citizen?.name?.split(' ')[0]}: `}{lastMsg.body}
         </p>
       </div>
-      {hasUnread && <span className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />}
+      {hasUnread && <span className="w-2.5 h-2.5 rounded-full bg-violet-400 flex-shrink-0"
+        style={{ boxShadow: '0 0 8px rgba(167,139,250,0.6)' }} />}
     </motion.div>
   );
 };
@@ -255,7 +257,7 @@ const AdminMessagesPage = () => {
   }
 
   return (
-    <div className="min-h-screen pb-8" style={{ background: 'var(--page-bg)' }}>
+    <div className="min-h-screen pb-8" style={{ background: '#0f172a' }}>
 
       {/* Header */}
       <div className="relative overflow-hidden"
@@ -276,13 +278,13 @@ const AdminMessagesPage = () => {
             </p>
           </div>
         </div>
-        <div className="h-5 rounded-t-[28px]" style={{ background: 'var(--page-bg)' }} />
+        <div className="h-5 rounded-t-[28px]" style={{ background: '#0f172a' }} />
       </div>
 
       <div className="-mt-1 px-4 pt-2 flex flex-col gap-2.5">
         {isLoading && [1, 2, 3].map(i => (
-          <div key={i} className="bg-white rounded-2xl h-16 animate-pulse"
-            style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.05)' }} />
+          <div key={i} className="rounded-2xl h-16 animate-pulse"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.07)' }} />
         ))}
 
         <AnimatePresence>
