@@ -462,11 +462,13 @@ const HomePage = () => {
             })}
           </div>
         </div>
+
+        <div className="h-5 rounded-t-[28px] bg-gray-50/80" />
       </div>
 
       {/* ── Stats cards ── */}
       {stats && !search && !statusFilter && !workTypeFilter && (
-        <div className="px-5 -mt-2 mb-1 flex gap-2.5">
+        <div className="px-5 -mt-1 mb-1 flex gap-2.5">
           <StatCard
             label="Total reportes"
             value={stats.total}
