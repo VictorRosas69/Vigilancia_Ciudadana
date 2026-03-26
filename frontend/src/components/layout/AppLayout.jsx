@@ -6,9 +6,9 @@ import BottomNav from './BottomNav';
 import useAuthStore from '../../store/authStore';
 
 const pageVariants = {
-  initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0 },
-  exit:    { opacity: 0, y: -8 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit:    { opacity: 0 },
 };
 
 const AppLayout = () => {
@@ -70,7 +70,7 @@ const AppLayout = () => {
             initial="initial"
             animate="animate"
             exit="exit"
-            transition={{ duration: 0.22, ease: 'easeOut' }}
+            transition={{ duration: 0.18, ease: 'easeInOut' }}
           >
             <Outlet />
           </motion.div>
