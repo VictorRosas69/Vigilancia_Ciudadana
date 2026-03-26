@@ -17,41 +17,44 @@ const fmt = (date) =>
   new Date(date).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
 
 // ─── Burbuja de mensaje ────────────────────────────────────────────────────────
-const Bubble = ({ body, isAdmin, createdAt, name, avatar }) => (
-  <div className={`flex items-end gap-2 ${isAdmin ? 'justify-start' : 'justify-end'}`}>
-    {isAdmin && (
-      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mb-1"
-        style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)' }}>
-        <HiShieldCheck className="text-white text-xs" />
-      </div>
-    )}
-    <div className={`max-w-[78%] ${isAdmin ? 'items-start' : 'items-end'} flex flex-col gap-1`}>
+const Bubble = ({ body, isAdmin, createdAt, name, avatar }) => {
+  const avatarUrl = typeof avatar === 'string' ? avatar : avatar?.url;
+  return (
+    <div className={`flex items-end gap-2 ${isAdmin ? 'justify-start' : 'justify-end'}`}>
       {isAdmin && (
-        <span className="text-[10px] font-bold text-violet-600 px-1">Administrador</span>
+        <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mb-1"
+          style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 2px 8px rgba(79,70,229,0.4)' }}>
+          <HiShieldCheck className="text-white text-sm" />
+        </div>
       )}
-      <div
-        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-          isAdmin
-            ? 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
-            : 'text-white rounded-tr-sm'
-        }`}
-        style={!isAdmin ? { background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' } : {
-          boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
-        }}
-      >
-        {body}
+      <div className={`max-w-[78%] ${isAdmin ? 'items-start' : 'items-end'} flex flex-col gap-1`}>
+        {isAdmin && (
+          <span className="text-[10px] font-bold text-violet-400 px-1">Administrador</span>
+        )}
+        <div
+          className={`px-4 py-2.5 text-sm leading-relaxed ${
+            isAdmin ? 'rounded-2xl rounded-tl-sm' : 'rounded-2xl rounded-tr-sm text-white'
+          }`}
+          style={isAdmin
+            ? { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', backdropFilter: 'blur(8px)' }
+            : { background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', boxShadow: '0 4px 16px rgba(37,99,235,0.4)' }
+          }
+        >
+          {body}
+        </div>
+        <span className="text-[10px] text-slate-500 px-1">{fmt(createdAt)}</span>
       </div>
-      <span className="text-[10px] text-gray-400 px-1">{fmt(createdAt)}</span>
+      {!isAdmin && avatarUrl ? (
+        <img src={avatarUrl} className="w-8 h-8 rounded-full object-cover flex-shrink-0 mb-1 ring-2 ring-blue-500/30" alt="" />
+      ) : !isAdmin ? (
+        <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mb-1"
+          style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', boxShadow: '0 2px 8px rgba(37,99,235,0.4)' }}>
+          <span className="text-white text-xs font-bold">{name?.[0]?.toUpperCase()}</span>
+        </div>
+      ) : null}
     </div>
-    {!isAdmin && avatar ? (
-      <img src={avatar} className="w-7 h-7 rounded-full object-cover flex-shrink-0 mb-1" alt="" />
-    ) : !isAdmin ? (
-      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mb-1 bg-blue-500">
-        <span className="text-white text-xs font-bold">{name?.[0]?.toUpperCase()}</span>
-      </div>
-    ) : null}
-  </div>
-);
+  );
+};
 
 // ─── Vista de chat de un hilo ──────────────────────────────────────────────────
 const ChatView = ({ thread, onBack, currentUser, onReply }) => {
@@ -85,28 +88,42 @@ const ChatView = ({ thread, onBack, currentUser, onReply }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: '#f1f5f9' }}>
+    <div className="flex flex-col h-screen" style={{ background: '#0f172a' }}>
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100"
-        style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top), 16px)',
+          background: 'linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          boxShadow: '0 2px 20px rgba(0,0,0,0.3)',
+        }}>
         <button
           onClick={onBack}
-          className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 active:bg-gray-200 transition-colors"
+          className="w-9 h-9 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
         >
-          <HiArrowLeft className="text-gray-700 text-lg" />
+          <HiArrowLeft className="text-white text-lg" />
         </button>
-        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)' }}>
+        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 4px 12px rgba(79,70,229,0.5)' }}>
           <HiShieldCheck className="text-white text-base" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-extrabold text-gray-900 truncate">Administrador</p>
-          <p className="text-xs text-gray-400 truncate">{thread.subject}</p>
+          <p className="text-sm font-extrabold text-white truncate">Administrador</p>
+          <p className="text-xs text-blue-300/70 truncate">{thread.subject}</p>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-green-400" style={{ boxShadow: '0 0 6px rgba(74,222,128,0.6)' }} />
+          <span className="text-[10px] text-green-400 font-semibold">En línea</span>
         </div>
       </div>
 
       {/* Mensajes */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}>
         {allMessages.map((m, i) => (
           <Bubble
             key={i}
@@ -121,8 +138,13 @@ const ChatView = ({ thread, onBack, currentUser, onReply }) => {
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 px-4 py-3 bg-white border-t border-gray-100 flex items-end gap-2"
-        style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 88px), 96px)' }}>
+      <div className="flex-shrink-0 px-4 py-3 flex items-end gap-2"
+        style={{
+          paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 88px), 96px)',
+          background: 'rgba(15,23,42,0.95)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(16px)',
+        }}>
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
@@ -130,15 +152,20 @@ const ChatView = ({ thread, onBack, currentUser, onReply }) => {
           placeholder="Escribe un mensaje..."
           rows={1}
           maxLength={2000}
-          className="flex-1 resize-none border border-gray-200 rounded-2xl px-4 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
-          style={{ maxHeight: 120 }}
+          className="flex-1 resize-none rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          style={{
+            maxHeight: 120,
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: '#e2e8f0',
+          }}
         />
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={handleSend}
           disabled={replyMut.isPending || !text.trim()}
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40 transition-opacity"
-          style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}
+          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40 transition-opacity"
+          style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', boxShadow: '0 4px 16px rgba(37,99,235,0.5)' }}
         >
           {replyMut.isPending
             ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
