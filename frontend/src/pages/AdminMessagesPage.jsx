@@ -22,41 +22,44 @@ const GRADS = [
 const gradFor = (name = '') => GRADS[(name.charCodeAt(0) || 0) % GRADS.length];
 
 // ─── Burbuja ──────────────────────────────────────────────────────────────────
-const Bubble = ({ body, isAdmin, createdAt, citizenName, citizenAvatar }) => (
-  <div className={`flex items-end gap-2 ${isAdmin ? 'justify-end' : 'justify-start'}`}>
-    {!isAdmin && (
-      citizenAvatar
-        ? <img src={citizenAvatar} className="w-7 h-7 rounded-full object-cover flex-shrink-0 mb-1" alt="" />
-        : <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold mb-1"
-            style={{ background: gradFor(citizenName) }}>
-            {initials(citizenName)}
-          </div>
-    )}
-    <div className={`max-w-[78%] flex flex-col gap-1 ${isAdmin ? 'items-end' : 'items-start'}`}>
+const Bubble = ({ body, isAdmin, createdAt, citizenName, citizenAvatar }) => {
+  const avatarUrl = typeof citizenAvatar === 'string' ? citizenAvatar : citizenAvatar?.url;
+  return (
+    <div className={`flex items-end gap-2 ${isAdmin ? 'justify-end' : 'justify-start'}`}>
       {!isAdmin && (
-        <span className="text-[10px] font-bold text-gray-500 px-1">{citizenName}</span>
+        avatarUrl
+          ? <img src={avatarUrl} className="w-8 h-8 rounded-full object-cover flex-shrink-0 mb-1 ring-2 ring-white/10" alt="" />
+          : <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold mb-1"
+              style={{ background: gradFor(citizenName), boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+              {initials(citizenName)}
+            </div>
       )}
-      <div
-        className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-          isAdmin ? 'text-white rounded-br-sm' : 'bg-white border border-gray-100 text-gray-800 rounded-bl-sm'
-        }`}
-        style={isAdmin
-          ? { background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 4px 12px rgba(79,70,229,0.3)' }
-          : { boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }
-        }
-      >
-        {body}
+      <div className={`max-w-[78%] flex flex-col gap-1 ${isAdmin ? 'items-end' : 'items-start'}`}>
+        {!isAdmin && (
+          <span className="text-[10px] font-bold text-slate-400 px-1">{citizenName}</span>
+        )}
+        <div
+          className={`px-4 py-2.5 text-sm leading-relaxed ${
+            isAdmin ? 'rounded-2xl rounded-br-sm text-white' : 'rounded-2xl rounded-bl-sm'
+          }`}
+          style={isAdmin
+            ? { background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 4px 16px rgba(79,70,229,0.4)' }
+            : { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#e2e8f0', backdropFilter: 'blur(8px)' }
+          }
+        >
+          {body}
+        </div>
+        <span className="text-[10px] text-slate-500 px-1">{fmt(createdAt)}</span>
       </div>
-      <span className="text-[10px] text-gray-400 px-1">{fmt(createdAt)}</span>
+      {isAdmin && (
+        <div className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center mb-1"
+          style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 2px 8px rgba(79,70,229,0.5)' }}>
+          <HiShieldCheck className="text-white text-sm" />
+        </div>
+      )}
     </div>
-    {isAdmin && (
-      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center mb-1"
-        style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)' }}>
-        <HiShieldCheck className="text-white text-xs" />
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 // ─── Vista de chat individual ─────────────────────────────────────────────────
 const ChatView = ({ thread, onBack }) => {
@@ -97,44 +100,60 @@ const ChatView = ({ thread, onBack }) => {
   };
 
   const citizen = thread.from;
+  const citizenAvatarUrl = typeof citizen?.avatar === 'string' ? citizen.avatar : citizen?.avatar?.url;
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: '#f1f5f9' }}>
+    <div className="flex flex-col h-screen" style={{ background: '#0f172a' }}>
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100"
-        style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+      <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top), 16px)',
+          background: 'linear-gradient(135deg,#0f172a 0%,#3b0764 100%)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          boxShadow: '0 2px 20px rgba(0,0,0,0.3)',
+        }}>
         <button onClick={onBack}
-          className="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 active:bg-gray-200 transition-colors">
-          <HiArrowLeft className="text-gray-700 text-lg" />
+          className="w-9 h-9 rounded-xl flex items-center justify-center active:scale-95 transition-transform"
+          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <HiArrowLeft className="text-white text-lg" />
         </button>
-        {citizen?.avatar
-          ? <img src={citizen.avatar} className="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
-          : <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
-              style={{ background: gradFor(citizen?.name) }}>
+        {citizenAvatarUrl
+          ? <img src={citizenAvatarUrl} className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-violet-500/40" alt="" />
+          : <div className="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
+              style={{ background: gradFor(citizen?.name), boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
               {initials(citizen?.name)}
             </div>
         }
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-extrabold text-gray-900 truncate">{citizen?.name}</p>
-          <p className="text-xs text-gray-400 truncate">{thread.subject}</p>
+          <p className="text-sm font-extrabold text-white truncate">{citizen?.name}</p>
+          <p className="text-xs text-violet-300/70 truncate">{thread.subject}</p>
         </div>
         {citizen?.city && (
-          <span className="text-[10px] text-gray-400 flex-shrink-0">{citizen.city}</span>
+          <span className="text-[10px] text-slate-400 flex-shrink-0 bg-white/8 px-2 py-1 rounded-lg">{citizen.city}</span>
         )}
       </div>
 
       {/* Mensajes */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}>
         {allMessages.map((m, i) => (
           <Bubble key={i} body={m.body} isAdmin={m.isAdmin} createdAt={m.createdAt}
-            citizenName={citizen?.name} citizenAvatar={citizen?.avatar} />
+            citizenName={citizen?.name} citizenAvatar={citizenAvatarUrl} />
         ))}
         <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <div className="flex-shrink-0 px-4 py-3 bg-white border-t border-gray-100 flex items-end gap-2"
-        style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 12px), 16px)' }}>
+      <div className="flex-shrink-0 px-4 py-3 flex items-end gap-2"
+        style={{
+          paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 88px), 96px)',
+          background: 'rgba(15,23,42,0.95)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          backdropFilter: 'blur(16px)',
+        }}>
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
@@ -142,15 +161,20 @@ const ChatView = ({ thread, onBack }) => {
           placeholder="Responder al ciudadano..."
           rows={1}
           maxLength={2000}
-          className="flex-1 resize-none border border-gray-200 rounded-2xl px-4 py-2.5 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-400 transition-all"
-          style={{ maxHeight: 120 }}
+          className="flex-1 resize-none rounded-2xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+          style={{
+            maxHeight: 120,
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: '#e2e8f0',
+          }}
         />
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={handleSend}
           disabled={replyMut.isPending || !text.trim()}
-          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40 transition-opacity"
-          style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)' }}
+          className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40 transition-opacity"
+          style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', boxShadow: '0 4px 16px rgba(79,70,229,0.5)' }}
         >
           {replyMut.isPending
             ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
