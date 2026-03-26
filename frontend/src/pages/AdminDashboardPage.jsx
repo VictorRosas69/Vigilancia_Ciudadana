@@ -277,20 +277,20 @@ const OverviewTab = ({ onViewReport }) => {
   };
 
   const STAT_CARDS = [
-    { label: 'Total reportes',  value: stats?.reports.total,      accent: '#3b82f6', icon: '📋' },
-    { label: 'Usuarios activos',value: stats?.users.active,       accent: '#0ea5e9', icon: '👥' },
-    { label: 'Resueltos',       value: stats?.reports.resolved,   accent: '#22c55e', icon: '✅' },
-    { label: 'Pendientes',      value: stats?.reports.pending,    accent: '#f59e0b', icon: '⏳' },
-    { label: 'En progreso',     value: stats?.reports.inProgress, accent: '#8b5cf6', icon: '⚙️' },
-    { label: 'Rechazados',      value: stats?.reports.rejected,   accent: '#ef4444', icon: '🚫' },
-    { label: 'Total usuarios',  value: stats?.users.total,        accent: '#06b6d4', icon: '🧑‍💻' },
-    { label: 'Comentarios',     value: stats?.comments.total,     accent: '#ec4899', icon: '💬' },
+    { label: 'Total reportes',  value: stats?.reports.total,      gradient: 'linear-gradient(135deg,#1e40af,#2563eb)', shadow: 'rgba(37,99,235,0.4)',   icon: '📋' },
+    { label: 'Usuarios activos',value: stats?.users.active,       gradient: 'linear-gradient(135deg,#0369a1,#0ea5e9)', shadow: 'rgba(14,165,233,0.4)',  icon: '👥' },
+    { label: 'Resueltos',       value: stats?.reports.resolved,   gradient: 'linear-gradient(135deg,#065f46,#059669)', shadow: 'rgba(5,150,105,0.4)',   icon: '✅' },
+    { label: 'Pendientes',      value: stats?.reports.pending,    gradient: 'linear-gradient(135deg,#92400e,#d97706)', shadow: 'rgba(217,119,6,0.4)',   icon: '⏳' },
+    { label: 'En progreso',     value: stats?.reports.inProgress, gradient: 'linear-gradient(135deg,#4c1d95,#7c3aed)', shadow: 'rgba(124,58,237,0.4)',  icon: '⚙️' },
+    { label: 'Rechazados',      value: stats?.reports.rejected,   gradient: 'linear-gradient(135deg,#991b1b,#dc2626)', shadow: 'rgba(220,38,38,0.4)',   icon: '🚫' },
+    { label: 'Total usuarios',  value: stats?.users.total,        gradient: 'linear-gradient(135deg,#155e75,#0891b2)', shadow: 'rgba(8,145,178,0.4)',   icon: '🧑‍💻' },
+    { label: 'Comentarios',     value: stats?.comments.total,     gradient: 'linear-gradient(135deg,#831843,#db2777)', shadow: 'rgba(219,39,119,0.4)',  icon: '💬' },
   ];
 
   if (isLoading) return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {Array.from({length: 8}).map((_, i) => (
-        <div key={i} className="bg-white rounded-2xl h-24 animate-pulse" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }} />
+        <div key={i} className="rounded-2xl h-24 animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />
       ))}
     </div>
   );
@@ -300,15 +300,16 @@ const OverviewTab = ({ onViewReport }) => {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {STAT_CARDS.map(s => (
-          <div key={s.label} className="bg-white rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-all group"
-            style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)', borderLeft: `4px solid ${s.accent}` }}>
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-              style={{ background: `${s.accent}18` }}>
+          <div key={s.label} className="rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden transition-transform hover:scale-[1.02]"
+            style={{ background: s.gradient, boxShadow: `0 8px 24px ${s.shadow}` }}>
+            <div className="absolute top-0 right-0 w-20 h-20 rounded-full opacity-10"
+              style={{ background: 'white', transform: 'translate(30%,-30%)' }} />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 bg-white/15">
               {s.icon}
             </div>
             <div className="min-w-0">
-              <p className="text-2xl font-extrabold text-gray-900 leading-none tabular-nums">{s.value ?? '—'}</p>
-              <p className="text-xs font-semibold mt-1.5" style={{ color: s.accent }}>{s.label}</p>
+              <p className="text-3xl font-black text-white leading-none tabular-nums">{s.value ?? '—'}</p>
+              <p className="text-xs font-semibold mt-1.5 text-white/75">{s.label}</p>
             </div>
           </div>
         ))}
@@ -318,13 +319,13 @@ const OverviewTab = ({ onViewReport }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* Barras por mes */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="lg:col-span-2 rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-extrabold text-gray-800">Reportes por mes</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Últimos 6 meses</p>
+              <h3 className="font-extrabold text-white">Reportes por mes</h3>
+              <p className="text-xs mt-0.5" style={{ color: 'rgba(148,163,184,0.7)' }}>Últimos 6 meses</p>
             </div>
-            <span className="text-xs bg-blue-50 text-blue-600 font-semibold px-3 py-1 rounded-lg">
+            <span className="text-xs font-semibold px-3 py-1 rounded-lg" style={{ background: 'rgba(37,99,235,0.2)', color: '#93c5fd' }}>
               Total: {stats?.reports.total ?? 0}
             </span>
           </div>
@@ -334,15 +335,18 @@ const OverviewTab = ({ onViewReport }) => {
               const pct = Math.round((count / maxCount) * 100);
               return (
                 <div key={label} className="flex-1 flex flex-col items-center gap-2">
-                  <span className="text-xs font-bold text-gray-500">{count > 0 ? count : ''}</span>
+                  <span className="text-xs font-bold" style={{ color: 'rgba(148,163,184,0.8)' }}>{count > 0 ? count : ''}</span>
                   <div className="w-full flex items-end justify-center" style={{ height: '140px' }}>
                     <div
                       className="w-full rounded-t-xl transition-all duration-700"
-                      style={{ background: isLast ? 'linear-gradient(180deg, #3b82f6, #1d4ed8)' : '#bfdbfe' }}
-                      style={{ height: `${Math.max(pct, count > 0 ? 6 : 2)}%` }}
+                      style={{
+                        background: isLast ? 'linear-gradient(180deg, #3b82f6, #1d4ed8)' : 'rgba(59,130,246,0.25)',
+                        height: `${Math.max(pct, count > 0 ? 6 : 2)}%`,
+                        boxShadow: isLast ? '0 0 16px rgba(37,99,235,0.5)' : 'none',
+                      }}
                     />
                   </div>
-                  <span className="text-xs text-gray-400 font-semibold">{label}</span>
+                  <span className="text-xs font-semibold" style={{ color: 'rgba(148,163,184,0.7)' }}>{label}</span>
                 </div>
               );
             })}
@@ -350,10 +354,10 @@ const OverviewTab = ({ onViewReport }) => {
         </div>
 
         {/* Donut por estado */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
           <div className="mb-4">
-            <h3 className="font-extrabold text-gray-800">Estados</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Distribución actual</p>
+            <h3 className="font-extrabold text-white">Estados</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(148,163,184,0.7)' }}>Distribución actual</p>
           </div>
           <div className="flex items-center justify-center mb-4">
             <div className="relative">
@@ -370,9 +374,9 @@ const OverviewTab = ({ onViewReport }) => {
                     />
                   ) : null
                 )}
-                <circle cx="70" cy="70" r="32" fill="white" />
-                <text x="70" y="67" textAnchor="middle" className="text-lg font-black" fontSize="22" fontWeight="900" fill="#1e293b">{total === 1 ? 0 : total}</text>
-                <text x="70" y="82" textAnchor="middle" fontSize="9" fill="#94a3b8" fontWeight="600">REPORTES</text>
+                <circle cx="70" cy="70" r="32" fill="#0d1117" />
+                <text x="70" y="67" textAnchor="middle" fontSize="22" fontWeight="900" fill="white">{total === 1 ? 0 : total}</text>
+                <text x="70" y="82" textAnchor="middle" fontSize="9" fill="#64748b" fontWeight="600">REPORTES</text>
               </svg>
             </div>
           </div>
@@ -381,13 +385,13 @@ const OverviewTab = ({ onViewReport }) => {
               <div key={item.key} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                  <span className="text-xs text-gray-600 font-medium">{item.label}</span>
+                  <span className="text-xs font-medium" style={{ color: 'rgba(148,163,184,0.9)' }}>{item.label}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                     <div className="h-full rounded-full" style={{ width: `${Math.round(item.value / (total === 1 ? 1 : total) * 100)}%`, backgroundColor: item.color }} />
                   </div>
-                  <span className="text-xs font-bold text-gray-700 w-6 text-right">{item.value}</span>
+                  <span className="text-xs font-bold text-white w-6 text-right">{item.value}</span>
                 </div>
               </div>
             ))}
@@ -396,31 +400,39 @@ const OverviewTab = ({ onViewReport }) => {
       </div>
 
       {/* Reportes recientes */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
-          <h3 className="font-extrabold text-gray-800">Reportes recientes</h3>
-          <span className="text-xs text-gray-400">Últimos 5</span>
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <h3 className="font-extrabold text-white">Reportes recientes</h3>
+          <span className="text-xs" style={{ color: 'rgba(148,163,184,0.6)' }}>Últimos 5</span>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div>
           {recent.map(report => {
             const status = STATUS_MAP[report.status] || STATUS_MAP.pending;
             const priority = PRIORITY_MAP[report.priority] || PRIORITY_MAP.medium;
             return (
-              <div key={report._id} className="px-6 py-3.5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-base flex-shrink-0">
+              <div key={report._id} className="px-6 py-3.5 flex items-center gap-4 transition-colors"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0"
+                  style={{ background: 'rgba(255,255,255,0.08)' }}>
                   {report.images?.length > 0
                     ? <img src={report.images[0].url} alt="" className="w-full h-full object-cover rounded-lg" />
                     : WORK_ICONS[report.workType] || '📋'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-800 truncate">{report.title}</p>
-                  <p className="text-xs text-gray-400">{report.author?.name} · {fmt(report.createdAt)}</p>
+                  <p className="text-sm font-semibold text-white truncate">{report.title}</p>
+                  <p className="text-xs" style={{ color: 'rgba(148,163,184,0.6)' }}>{report.author?.name} · {fmt(report.createdAt)}</p>
                 </div>
                 <span className={`text-xs px-2 py-1 rounded-lg font-bold flex-shrink-0 ${priority.cls}`}>{priority.label}</span>
                 <span className={`text-xs px-2.5 py-1 rounded-lg font-semibold border flex-shrink-0 ${status.cls}`}>{status.label}</span>
                 <button
                   onClick={() => onViewReport(report._id)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-lg transition-colors flex-shrink-0"
+                  style={{ color: 'rgba(148,163,184,0.6)' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = '#93c5fd'; e.currentTarget.style.background = 'rgba(37,99,235,0.15)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'rgba(148,163,184,0.6)'; e.currentTarget.style.background = 'transparent'; }}
                 >
                   {Icons.eye}
                 </button>
@@ -475,21 +487,23 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="bg-white rounded-2xl p-4 flex flex-wrap items-center gap-3" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+      <div className="rounded-2xl p-4 flex flex-wrap items-center gap-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="relative flex-1 min-w-[200px]">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">{Icons.search}</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(148,163,184,0.6)' }}>{Icons.search}</span>
           <input
             type="text"
             placeholder="Buscar por título o descripción..."
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50 focus:bg-white transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
           />
         </div>
         <select
           value={filterStatus}
           onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
-          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50 text-gray-700 font-medium"
+          className="py-2.5 px-3 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(226,232,240,0.9)' }}
         >
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_MAP).map(([val, { label }]) => (
@@ -522,28 +536,28 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Reporte</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden md:table-cell">Autor</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden lg:table-cell">Ubicación</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Prioridad</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Estado</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden lg:table-cell">Fecha</th>
-              <th className="px-5 py-4 bg-gray-50/80" />
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Reporte</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden md:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Autor</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden lg:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Ubicación</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Prioridad</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Estado</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden lg:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Fecha</th>
+              <th className="px-5 py-4" style={{ background: 'rgba(255,255,255,0.03)' }} />
             </tr>
           </thead>
           <tbody>
             {isLoading && Array.from({length: 6}).map((_, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid #f8fafc' }}>
+              <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <td colSpan={7} className="px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 animate-pulse flex-shrink-0" />
+                    <div className="w-10 h-10 rounded-xl animate-pulse flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }} />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3.5 bg-gray-100 rounded-lg animate-pulse w-2/3" />
-                      <div className="h-3 bg-gray-100 rounded-lg animate-pulse w-1/3" />
+                      <div className="h-3.5 rounded-lg animate-pulse w-2/3" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                      <div className="h-3 rounded-lg animate-pulse w-1/3" style={{ background: 'rgba(255,255,255,0.05)' }} />
                     </div>
                   </div>
                 </td>
@@ -552,42 +566,43 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
             {!isLoading && reports.length === 0 && (
               <tr><td colSpan={7} className="px-5 py-16 text-center">
                 <div className="text-4xl mb-3">🔍</div>
-                <p className="text-gray-500 font-semibold">No se encontraron reportes</p>
-                <p className="text-gray-400 text-xs mt-1">Intenta con otro filtro o búsqueda</p>
+                <p className="font-semibold" style={{ color: 'rgba(148,163,184,0.8)' }}>No se encontraron reportes</p>
+                <p className="text-xs mt-1" style={{ color: 'rgba(100,116,139,0.7)' }}>Intenta con otro filtro o búsqueda</p>
               </td></tr>
             )}
             {!isLoading && reports.map((report, idx) => {
               const priority = PRIORITY_MAP[report.priority] || PRIORITY_MAP.medium;
               const status = STATUS_MAP[report.status] || STATUS_MAP.pending;
               return (
-                <tr key={report._id} className="group transition-colors" style={{ borderBottom: '1px solid #f8fafc', background: idx % 2 === 0 ? 'white' : '#fafbfc' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f0f9ff'}
-                  onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'white' : '#fafbfc'}
+                <tr key={report._id} className="group transition-colors" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       {report.images?.length > 0
-                        ? <img src={report.images[0].url} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }} />
-                        : <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">{WORK_ICONS[report.workType] || '📋'}</div>
+                        ? <img src={report.images[0].url} alt="" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }} />
+                        : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ background: 'rgba(37,99,235,0.15)' }}>{WORK_ICONS[report.workType] || '📋'}</div>
                       }
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 truncate max-w-[200px] text-[13px]">{report.title}</p>
-                        <p className="text-xs text-gray-400 truncate max-w-[200px] mt-0.5">{report.description}</p>
+                        <p className="font-semibold text-white truncate max-w-[200px] text-[13px]">{report.title}</p>
+                        <p className="text-xs truncate max-w-[200px] mt-0.5" style={{ color: 'rgba(100,116,139,0.8)' }}>{report.description}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-5 py-4 hidden md:table-cell">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 overflow-hidden">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 overflow-hidden"
+                        style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', color: 'white' }}>
                         {report.author?.avatar?.url
                           ? <img src={report.author.avatar.url} alt="" className="w-full h-full object-cover" />
                           : report.author?.name?.charAt(0) || '?'}
                       </div>
-                      <span className="text-gray-700 text-sm font-medium">{report.author?.name || 'Anónimo'}</span>
+                      <span className="text-sm font-medium" style={{ color: 'rgba(148,163,184,0.9)' }}>{report.author?.name || 'Anónimo'}</span>
                     </div>
                   </td>
                   <td className="px-5 py-4 hidden lg:table-cell">
-                    <span className="text-gray-500 text-xs bg-gray-50 px-2 py-1 rounded-lg">{report.location?.neighborhood || report.location?.city || '—'}</span>
+                    <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(148,163,184,0.8)' }}>{report.location?.neighborhood || report.location?.city || '—'}</span>
                   </td>
                   <td className="px-5 py-4">
                     <span className={`text-xs px-2.5 py-1.5 rounded-xl font-bold ${priority.cls}`}>{priority.label}</span>
@@ -601,13 +616,19 @@ const ReportsTab = ({ onViewReport, adminUser, stats }) => {
                       {Object.entries(STATUS_MAP).map(([val, { label }]) => <option key={val} value={val}>{label}</option>)}
                     </select>
                   </td>
-                  <td className="px-5 py-4 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmt(report.createdAt)}</span></td>
+                  <td className="px-5 py-4 hidden lg:table-cell"><span className="text-xs" style={{ color: 'rgba(100,116,139,0.8)' }}>{fmt(report.createdAt)}</span></td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1 justify-end">
                       <button onClick={() => onViewReport(report._id)} title="Ver detalle"
-                        className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">{Icons.eye}</button>
+                        className="p-2 rounded-xl transition-colors" style={{ color: 'rgba(100,116,139,0.7)' }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#93c5fd'; e.currentTarget.style.background = 'rgba(37,99,235,0.15)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(100,116,139,0.7)'; e.currentTarget.style.background = 'transparent'; }}
+                      >{Icons.eye}</button>
                       <button onClick={() => handleDelete(report._id)} title="Eliminar"
-                        className="p-2 rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">{Icons.trash}</button>
+                        className="p-2 rounded-xl transition-colors" style={{ color: 'rgba(100,116,139,0.7)' }}
+                        onMouseEnter={e => { e.currentTarget.style.color = '#fca5a5'; e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'rgba(100,116,139,0.7)'; e.currentTarget.style.background = 'transparent'; }}
+                      >{Icons.trash}</button>
                     </div>
                   </td>
                 </tr>
@@ -669,49 +690,51 @@ const UsersTab = () => {
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="bg-white rounded-2xl p-4 flex flex-wrap items-center gap-3" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+      <div className="rounded-2xl p-4 flex flex-wrap items-center gap-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <div className="relative flex-1 min-w-[200px]">
-          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">{Icons.search}</span>
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(148,163,184,0.6)' }}>{Icons.search}</span>
           <input type="text" placeholder="Buscar por nombre, email o ciudad..." value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50 focus:bg-white transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
           />
         </div>
         <select value={filterRole} onChange={e => { setFilterRole(e.target.value); setPage(1); }}
-          className="py-2.5 px-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-50 text-gray-700 font-medium"
+          className="py-2.5 px-3 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(226,232,240,0.9)' }}
         >
           <option value="">Todos los roles</option>
           <option value="citizen">Ciudadano</option>
           <option value="moderator">Moderador</option>
           <option value="admin">Admin</option>
         </select>
-        {isFetching && <span className="text-xs text-gray-400 flex items-center gap-1.5"><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Actualizando...</span>}
+        {isFetching && <span className="text-xs flex items-center gap-1.5" style={{ color: 'rgba(148,163,184,0.7)' }}><span className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />Actualizando...</span>}
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Usuario</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden md:table-cell">Email</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden lg:table-cell">Ciudad</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Rol</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden md:table-cell">Reportes</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80">Activo</th>
-              <th className="text-left px-5 py-4 font-bold text-gray-400 text-[11px] uppercase tracking-widest bg-gray-50/80 hidden lg:table-cell">Registro</th>
-              <th className="px-5 py-4 bg-gray-50/80" />
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Usuario</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden md:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Email</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden lg:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Ciudad</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Rol</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden md:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Reportes</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Activo</th>
+              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden lg:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Registro</th>
+              <th className="px-5 py-4" style={{ background: 'rgba(255,255,255,0.03)' }} />
             </tr>
           </thead>
           <tbody>
             {isLoading && Array.from({length: 6}).map((_, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid #f8fafc' }}>
+              <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                 <td colSpan={8} className="px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse flex-shrink-0" />
+                    <div className="w-10 h-10 rounded-full animate-pulse flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }} />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3.5 bg-gray-100 rounded-lg animate-pulse w-1/3" />
-                      <div className="h-3 bg-gray-100 rounded-lg animate-pulse w-1/4" />
+                      <div className="h-3.5 rounded-lg animate-pulse w-1/3" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                      <div className="h-3 rounded-lg animate-pulse w-1/4" style={{ background: 'rgba(255,255,255,0.05)' }} />
                     </div>
                   </div>
                 </td>
@@ -720,7 +743,7 @@ const UsersTab = () => {
             {!isLoading && users.length === 0 && (
               <tr><td colSpan={8} className="px-5 py-16 text-center">
                 <div className="text-4xl mb-3">👥</div>
-                <p className="text-gray-500 font-semibold">No se encontraron usuarios</p>
+                <p className="font-semibold" style={{ color: 'rgba(148,163,184,0.8)' }}>No se encontraron usuarios</p>
               </td></tr>
             )}
             {!isLoading && users.map((user, idx) => {
@@ -728,9 +751,9 @@ const UsersTab = () => {
               const isAdmin = user.role === 'admin';
               const toggling = toggleMutation.isPending && toggleMutation.variables === user._id;
               return (
-                <tr key={user._id} style={{ borderBottom: '1px solid #f8fafc', background: idx % 2 === 0 ? 'white' : '#fafbfc' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f0f9ff'}
-                  onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'white' : '#fafbfc'}
+                <tr key={user._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
@@ -741,14 +764,14 @@ const UsersTab = () => {
                           : user.name?.charAt(0)?.toUpperCase() || '?'}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900 text-[13px]">{user.name}</p>
-                        {isAdmin && <p className="text-[10px] text-blue-500 font-bold">Administrador</p>}
+                        <p className="font-semibold text-white text-[13px]">{user.name}</p>
+                        {isAdmin && <p className="text-[10px] text-blue-400 font-bold">Administrador</p>}
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 hidden md:table-cell"><span className="text-gray-500 text-xs">{user.email}</span></td>
+                  <td className="px-5 py-4 hidden md:table-cell"><span className="text-xs" style={{ color: 'rgba(100,116,139,0.8)' }}>{user.email}</span></td>
                   <td className="px-5 py-4 hidden lg:table-cell">
-                    <span className="text-gray-500 text-xs bg-gray-50 px-2 py-1 rounded-lg">{user.city || '—'}</span>
+                    <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(148,163,184,0.8)' }}>{user.city || '—'}</span>
                   </td>
                   <td className="px-5 py-4">
                     {isAdmin ? (
@@ -765,7 +788,7 @@ const UsersTab = () => {
                     )}
                   </td>
                   <td className="px-5 py-4 hidden md:table-cell">
-                    <span className="font-bold text-gray-800 text-sm">{user.reportsCount ?? 0}</span>
+                    <span className="font-bold text-white text-sm">{user.reportsCount ?? 0}</span>
                   </td>
                   <td className="px-5 py-4">
                     {isAdmin ? <span className="text-xs text-gray-300">—</span> : (
@@ -778,7 +801,7 @@ const UsersTab = () => {
                       </button>
                     )}
                   </td>
-                  <td className="px-5 py-4 hidden lg:table-cell"><span className="text-xs text-gray-400">{fmt(user.createdAt)}</span></td>
+                  <td className="px-5 py-4 hidden lg:table-cell"><span className="text-xs" style={{ color: 'rgba(100,116,139,0.8)' }}>{fmt(user.createdAt)}</span></td>
                   <td className="px-5 py-4">
                     {!isAdmin && (
                       <button onClick={() => { if (!window.confirm(`¿Eliminar a "${user.name}"?`)) return; deleteMutation.mutate(user._id); }}
@@ -1120,7 +1143,7 @@ const AdminDashboardPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen flex" style={{ background: '#0d1117' }}>
 
       {/* Sidebar */}
       <aside className="w-60 flex flex-col flex-shrink-0 fixed h-full z-10" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%)' }}>
@@ -1186,20 +1209,21 @@ const AdminDashboardPage = () => {
       {/* Contenido principal */}
       <main className="flex-1 ml-60 min-h-screen flex flex-col">
         {/* Topbar */}
-        <header className="bg-white px-8 py-4 flex items-center justify-between sticky top-0 z-10" style={{ borderBottom: '1px solid #f1f5f9', boxShadow: '0 1px 8px rgba(0,0,0,0.04)' }}>
+        <header className="px-8 py-4 flex items-center justify-between sticky top-0 z-10"
+          style={{ background: 'rgba(13,17,23,0.85)', borderBottom: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(16px)', boxShadow: '0 1px 24px rgba(0,0,0,0.4)' }}>
           <div>
-            <h1 className="text-lg font-extrabold text-gray-900">{NAV.find(n => n.id === activeTab)?.label}</h1>
-            <p className="text-xs text-gray-400 mt-0.5 capitalize">
+            <h1 className="text-lg font-extrabold text-white">{NAV.find(n => n.id === activeTab)?.label}</h1>
+            <p className="text-xs mt-0.5 capitalize" style={{ color: 'rgba(148,163,184,0.7)' }}>
               {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-gray-800">{user?.name}</p>
-              <p className="text-xs font-semibold" style={{ color: '#3b82f6' }}>Administrador</p>
+              <p className="text-sm font-bold text-white">{user?.name}</p>
+              <p className="text-xs font-semibold text-blue-400">Administrador</p>
             </div>
             <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center font-extrabold text-sm uppercase flex-shrink-0"
-              style={{ background: user?.avatar?.url ? 'transparent' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: 'white', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}>
+              style={{ background: user?.avatar?.url ? 'transparent' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)', color: 'white', boxShadow: '0 2px 12px rgba(37,99,235,0.5)' }}>
               {user?.avatar?.url
                 ? <img src={user.avatar.url} alt={user.name} className="w-full h-full object-cover" />
                 : (user?.name?.charAt(0) || 'A')
