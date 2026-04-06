@@ -1088,11 +1088,12 @@ const UsersTab = () => {
 
       {/* Tabla */}
       <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[460px]">
           <thead>
             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Usuario</th>
-              <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden md:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Email</th>
+              <th className="text-left px-3 py-3 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Usuario</th>
+              <th className="text-left px-3 py-3 font-bold text-[11px] uppercase tracking-widest hidden md:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Email</th>
               <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden lg:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Ciudad</th>
               <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Rol</th>
               <th className="text-left px-5 py-4 font-bold text-[11px] uppercase tracking-widest hidden md:table-cell" style={{ color: 'rgba(100,116,139,0.9)', background: 'rgba(255,255,255,0.03)' }}>Reportes</th>
@@ -1198,6 +1199,7 @@ const UsersTab = () => {
             })}
           </tbody>
         </table>
+        </div>{/* overflow-x-auto */}
 
         {pagination.pages > 1 && (
           <div className="px-5 py-4 flex items-center justify-between" style={{ borderTop: '1px solid #f1f5f9' }}>
@@ -2106,7 +2108,7 @@ const MessagesTab = () => {
     <div className="flex rounded-2xl overflow-hidden" style={{ height: 'calc(100vh - 164px)', border: t.cardBorder, boxShadow: t.cardShadow }}>
 
       {/* ── Lista de conversaciones ── */}
-      <div className="w-80 flex-shrink-0 flex flex-col" style={{ background: t.cardBg, borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0'}` }}>
+      <div className={`flex-shrink-0 flex flex-col md:w-80 w-full ${selected ? 'hidden md:flex' : 'flex'}`} style={{ background: t.cardBg, borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0'}` }}>
         <div className="px-4 py-4 flex-shrink-0" style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#f1f5f9'}` }}>
           <p className="font-extrabold text-sm" style={{ color: t.text1 }}>Conversaciones</p>
           <p className="text-xs mt-0.5" style={{ color: t.text3 }}>
@@ -2186,11 +2188,19 @@ const MessagesTab = () => {
 
       {/* ── Panel de chat ── */}
       {selected ? (
-        <div className="flex-1 flex flex-col min-w-0" style={{ background: isDark ? '#0d1117' : '#f8fafc' }}>
+        <div className="flex-1 flex flex-col min-w-0 w-full" style={{ background: isDark ? '#0d1117' : '#f8fafc' }}>
 
           {/* Cabecera chat */}
-          <div className="px-5 py-3.5 flex items-center gap-3 flex-shrink-0"
+          <div className="px-4 py-3 flex items-center gap-3 flex-shrink-0"
             style={{ background: t.cardBg, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.07)' : '#e2e8f0'}` }}>
+            {/* Botón volver — solo móvil */}
+            <button onClick={() => setSelected(null)}
+              className="md:hidden w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: t.tagBg, color: t.text2 }}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             {(() => {
               const citizen   = selected.from;
               const avatarUrl = typeof citizen?.avatar === 'string' ? citizen.avatar : citizen?.avatar?.url;
