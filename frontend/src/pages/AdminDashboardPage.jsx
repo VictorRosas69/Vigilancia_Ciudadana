@@ -2441,7 +2441,7 @@ const AdminDashboardPage = () => {
             const isActive = activeTab === item.id;
             return (
               <button key={item.id}
-                onClick={() => { item.href ? navigate(item.href) : setActiveTab(item.id); setSidebarOpen(false); }}
+                onClick={() => { item.href ? navigate(item.href) : setActiveTab(item.id); }}
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
                 style={isActive ? {
                   background: 'rgba(59,130,246,0.25)',
