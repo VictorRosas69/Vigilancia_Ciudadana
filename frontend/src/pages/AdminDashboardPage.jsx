@@ -2318,7 +2318,6 @@ const AdminDashboardPage = () => {
   const { isDark, toggleTheme } = useTheme();
   const t = getTheme(isDark);
   const { confirmState, confirm, handleConfirm, handleCancel } = useConfirm();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: statsData } = useQuery({
     queryKey: ['admin-stats'],
@@ -2418,14 +2417,8 @@ const AdminDashboardPage = () => {
     <ConfirmModal {...confirmState} onConfirm={handleConfirm} onCancel={handleCancel} t={t} isDark={isDark} />
     <div className="min-h-screen flex" style={{ background: t.pageBg }}>
 
-      {/* Overlay móvil */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-20 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`w-60 flex flex-col flex-shrink-0 fixed h-full z-30 transition-transform duration-300
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+      {/* Sidebar — solo escritorio */}
+      <aside className="w-60 flex-col flex-shrink-0 fixed h-full z-30 hidden lg:flex"
         style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%)' }}>
         {/* Logo */}
         <div className="px-5 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -2502,14 +2495,6 @@ const AdminDashboardPage = () => {
         <header className="px-4 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-10"
           style={{ background: t.topbarBg, borderBottom: `1px solid ${t.topbarBorder}`, backdropFilter: 'blur(16px)', boxShadow: isDark ? '0 1px 24px rgba(0,0,0,0.4)' : '0 1px 12px rgba(0,0,0,0.06)' }}>
           <div className="flex items-center gap-3">
-            {/* Hamburger — solo móvil */}
-            <button onClick={() => setSidebarOpen(v => !v)}
-              className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: t.toggleBg, border: `1px solid ${t.toggleBorder}`, color: t.text2 }}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
             <div>
               <h1 className="text-lg font-extrabold" style={{ color: t.topbarText }}>{NAV.find(n => n.id === activeTab)?.label || 'Admin'}</h1>
               <p className="text-xs mt-0.5 capitalize hidden sm:block" style={{ color: t.topbarSub }}>
@@ -2619,7 +2604,7 @@ const AdminDashboardPage = () => {
           </div>
         </header>
 
-        <div className="px-8 py-6 flex-1">
+        <div className="px-4 lg:px-8 py-4 lg:py-6 flex-1 pb-20 lg:pb-6">
           {activeTab === 'overview'   && <OverviewTab onViewReport={setDetailReportId} />}
           {activeTab === 'reports'    && <ReportsTab  onViewReport={setDetailReportId} adminUser={user} stats={statsData?.stats} />}
           {activeTab === 'users'      && <UsersTab />}
@@ -2629,6 +2614,39 @@ const AdminDashboardPage = () => {
           {activeTab === 'activity'   && <ActivityTab />}
         </div>
       </main>
+
+      {/* Bottom nav — solo móvil */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 lg:hidden flex"
+        style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%)', borderTop: '1px solid rgba(255,255,255,0.1)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        {NAV.map(item => {
+          const isActive = activeTab === item.id;
+          return (
+            <button key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative transition-all"
+              style={{ color: isActive ? 'white' : 'rgba(148,163,184,0.6)', minWidth: 0 }}>
+              {isActive && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-b-full"
+                  style={{ background: 'linear-gradient(90deg,#60a5fa,#3b82f6)' }} />
+              )}
+              <span className={`transition-transform ${isActive ? 'scale-110' : 'scale-100'}`}
+                style={{ color: isActive ? '#60a5fa' : 'rgba(148,163,184,0.6)' }}>
+                {item.icon}
+              </span>
+              <span className="text-[9px] font-semibold leading-none truncate w-full text-center px-0.5"
+                style={{ color: isActive ? 'white' : 'rgba(148,163,184,0.55)' }}>
+                {item.label}
+              </span>
+              {item.badge > 0 && (
+                <span className="absolute top-1.5 right-[calc(50%-18px)] text-[8px] font-extrabold px-1 min-w-[14px] h-3.5 rounded-full text-white flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)', boxShadow: '0 1px 4px rgba(239,68,68,0.6)' }}>
+                  {item.badge > 9 ? '9+' : item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Modal detalle */}
       {detailReportId && (
