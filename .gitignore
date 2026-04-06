@@ -9,4 +9,11 @@ frontend/.env
 
 # General
 .DS_Store
-*.log
+*.logandroid.keystore
+app-release-signed.apk
+app-release-signed.apk.idsig
+app-release-unsigned-aligned.apk
+app-release-bundle.aab
+.gradle/
+build/
+app/

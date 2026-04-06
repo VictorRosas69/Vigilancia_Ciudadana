@@ -129,6 +129,8 @@ const getReports = async (req, res, next) => {
       search,
       author,
       sort = '-createdAt',
+      dateFrom,
+      dateTo,
     } = req.query;
 
     const filter = { isActive: { $ne: false } };
@@ -142,6 +144,15 @@ const getReports = async (req, res, next) => {
         { title: new RegExp(search, 'i') },
         { description: new RegExp(search, 'i') },
       ];
+    }
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) filter.createdAt.$gte = new Date(dateFrom);
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = end;
+      }
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
