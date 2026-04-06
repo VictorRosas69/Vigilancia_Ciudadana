@@ -1,19 +1,30 @@
-# Backend
+# ── Dependencias ──────────────────────────────────────────────────────────────
 backend/node_modules
-backend/.env
-
-# Frontend
 frontend/node_modules
-frontend/dist
+
+# ── Variables de entorno ───────────────────────────────────────────────────────
+backend/.env
 frontend/.env
 
-# General
-.DS_Store
-*.logandroid.keystore
+# ── Build del frontend ─────────────────────────────────────────────────────────
+frontend/dist
+
+# ── Android / APK (generados con bubblewrap) ──────────────────────────────────
+android.keystore
 app-release-signed.apk
 app-release-signed.apk.idsig
 app-release-unsigned-aligned.apk
 app-release-bundle.aab
+app-release-unsigned-aligned.apk
 .gradle/
 build/
 app/
+
+# ── Logs y archivos del sistema ────────────────────────────────────────────────
+*.log
+.DS_Store
+Thumbs.db
+
+# ── Uploads locales del backend ────────────────────────────────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep
