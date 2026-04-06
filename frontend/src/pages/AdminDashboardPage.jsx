@@ -2318,6 +2318,7 @@ const AdminDashboardPage = () => {
   const { isDark, toggleTheme } = useTheme();
   const t = getTheme(isDark);
   const { confirmState, confirm, handleConfirm, handleCancel } = useConfirm();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: statsData } = useQuery({
     queryKey: ['admin-stats'],
@@ -2417,8 +2418,15 @@ const AdminDashboardPage = () => {
     <ConfirmModal {...confirmState} onConfirm={handleConfirm} onCancel={handleCancel} t={t} isDark={isDark} />
     <div className="min-h-screen flex" style={{ background: t.pageBg }}>
 
+      {/* Overlay móvil */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-20 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 flex flex-col flex-shrink-0 fixed h-full z-10" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%)' }}>
+      <aside className={`w-60 flex flex-col flex-shrink-0 fixed h-full z-30 transition-transform duration-300
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
+        style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e3a8a 100%)' }}>
         {/* Logo */}
         <div className="px-5 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div className="flex items-center gap-3">
@@ -2440,7 +2448,7 @@ const AdminDashboardPage = () => {
             const isActive = activeTab === item.id;
             return (
               <button key={item.id}
-                onClick={() => item.href ? navigate(item.href) : setActiveTab(item.id)}
+                onClick={() => { item.href ? navigate(item.href) : setActiveTab(item.id); setSidebarOpen(false); }}
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all"
                 style={isActive ? {
                   background: 'rgba(59,130,246,0.25)',
@@ -2489,15 +2497,25 @@ const AdminDashboardPage = () => {
       </aside>
 
       {/* Contenido principal */}
-      <main className="flex-1 ml-60 min-h-screen flex flex-col">
+      <main className="flex-1 lg:ml-60 min-h-screen flex flex-col">
         {/* Topbar */}
-        <header className="px-8 py-4 flex items-center justify-between sticky top-0 z-10"
+        <header className="px-4 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-10"
           style={{ background: t.topbarBg, borderBottom: `1px solid ${t.topbarBorder}`, backdropFilter: 'blur(16px)', boxShadow: isDark ? '0 1px 24px rgba(0,0,0,0.4)' : '0 1px 12px rgba(0,0,0,0.06)' }}>
-          <div>
-            <h1 className="text-lg font-extrabold" style={{ color: t.topbarText }}>{NAV.find(n => n.id === activeTab)?.label || 'Admin'}</h1>
-            <p className="text-xs mt-0.5 capitalize" style={{ color: t.topbarSub }}>
-              {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Hamburger — solo móvil */}
+            <button onClick={() => setSidebarOpen(v => !v)}
+              className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: t.toggleBg, border: `1px solid ${t.toggleBorder}`, color: t.text2 }}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-lg font-extrabold" style={{ color: t.topbarText }}>{NAV.find(n => n.id === activeTab)?.label || 'Admin'}</h1>
+              <p className="text-xs mt-0.5 capitalize hidden sm:block" style={{ color: t.topbarSub }}>
+                {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {/* Campana de notificaciones */}
