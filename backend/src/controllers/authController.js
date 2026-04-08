@@ -18,9 +18,10 @@ const ALLOWED_EMAIL_DOMAINS = [
 ];
 
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-  });
+  // Limpiar posibles comillas o espacios del valor de la variable de entorno
+  const rawExpiry = process.env.JWT_EXPIRES_IN;
+  const expiresIn = rawExpiry ? rawExpiry.trim().replace(/^["']|["']$/g, '') || '7d' : '7d';
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn });
 };
 
 const sendTokenResponse = (user, statusCode, res, message) => {
