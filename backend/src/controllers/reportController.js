@@ -396,6 +396,47 @@ const updateStatus = async (req, res, next) => {
   }
 };
 
+// ─── MAPA — reportes con coordenadas ─────────────────────────────────────────
+const getMapReports = async (req, res, next) => {
+  try {
+    const reports = await Report.find({ isActive: { $ne: false } })
+      .select('title status workType priority location likesCount')
+      .lean();
+
+    res.status(200).json({ success: true, reports });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── REPORTES CERCANOS ────────────────────────────────────────────────────────
+const getNearbyReports = async (req, res, next) => {
+  try {
+    const { lat, lng, radius = 5000 } = req.query;
+
+    if (!lat || !lng) {
+      return res.status(400).json({ success: false, message: 'Se requieren lat y lng' });
+    }
+
+    const reports = await Report.find({
+      isActive: { $ne: false },
+      location: {
+        $near: {
+          $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+          $maxDistance: parseInt(radius),
+        },
+      },
+    })
+      .select('title status workType priority location likesCount')
+      .limit(50)
+      .lean();
+
+    res.status(200).json({ success: true, reports });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ─── ESTADÍSTICAS PÚBLICAS ────────────────────────────────────────────────────
 const getPublicStats = async (req, res, next) => {
   try {
@@ -422,4 +463,6 @@ module.exports = {
   updateStatus,
   subscribeToReport,
   getPublicStats,
+  getMapReports,
+  getNearbyReports,
 };

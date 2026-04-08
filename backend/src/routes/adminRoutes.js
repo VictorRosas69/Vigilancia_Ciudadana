@@ -7,6 +7,7 @@ const { protect, adminOnly } = require('../middlewares/authMiddleware');
 router.use(protect, adminOnly);
 
 router.get('/stats', getStats);
+router.get('/dashboard', getStats);
 router.get('/users', getUsers);
 router.patch('/users/:id/toggle-status', toggleUserStatus);
 router.patch('/users/:id/role', updateUserRole);
