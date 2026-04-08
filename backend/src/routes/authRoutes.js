@@ -10,6 +10,10 @@ const {
 } = require('../middlewares/validateMiddleware');
 
 // ─── Rate Limiters ────────────────────────────────────────────────────────────
+// En entornos no productivos, omitir rate limiting completamente.
+// En producción siempre se aplica.
+const skipInDev = () => process.env.NODE_ENV !== 'production';
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 5,
@@ -17,6 +21,7 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false },
+  skip: skipInDev,
 });
 
 const registerLimiter = rateLimit({
@@ -26,6 +31,7 @@ const registerLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false },
+  skip: skipInDev,
 });
 
 const forgotPasswordLimiter = rateLimit({
@@ -35,6 +41,7 @@ const forgotPasswordLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   validate: { xForwardedForHeader: false },
+  skip: skipInDev,
 });
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────

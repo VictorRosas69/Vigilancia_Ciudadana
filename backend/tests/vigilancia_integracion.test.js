@@ -17,7 +17,7 @@
 const axios = require('axios');
 
 // ─── Configuración global ────────────────────────────────────────────────────
-const BASE_URL = 'https://vigilancia-ciudadana.onrender.com/api';
+const BASE_URL = process.env.TEST_URL || 'http://localhost:5000/api';
 
 const CITIZEN = {
   email:    'feliperosasburbano03@gmail.com',
@@ -38,6 +38,26 @@ let commentId    = '';
 
 // Timeout amplio porque Render puede tardar en responder (cold start)
 jest.setTimeout(120000);
+
+// ─── Despertar el servidor antes de correr los tests ────────────────────────
+beforeAll(async () => {
+  const MAX_WAIT = 180000; // 3 minutos máximo
+  const INTERVAL = 5000;   // reintentar cada 5 segundos
+  const start = Date.now();
+
+  while (Date.now() - start < MAX_WAIT) {
+    try {
+      const res = await axios.get(`${BASE_URL}/health`, {
+        validateStatus: () => true,
+        timeout: 10000,
+      });
+      if (res.status !== 521 && res.status !== 502 && res.status !== 503) {
+        return; // servidor listo
+      }
+    } catch {}
+    await new Promise(r => setTimeout(r, INTERVAL));
+  }
+}, 200000);
 
 // ─── Helper HTTP ─────────────────────────────────────────────────────────────
 const api = (token = '') => axios.create({
@@ -459,3 +479,6 @@ describe('SPRINT 6 — Admin dashboard + exportación', () => {
   });
 
 });
+
+// Cerrar handles abiertos (conexiones SSE, etc.)
+afterAll(done => done());
