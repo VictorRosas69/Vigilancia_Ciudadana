@@ -268,6 +268,74 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
   );
 };
 
+// ─── Delete Confirm Modal ──────────────────────────────────────────────────────
+const DeleteConfirmModal = ({ petition, onClose, onConfirm, isLoading }) => {
+  if (!petition) return null;
+  return (
+    <div className="fixed inset-0 z-[200] flex flex-col justify-end">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+        className="relative bg-white rounded-t-3xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-gray-200 rounded-full" />
+        </div>
+
+        <div className="px-5 pt-4 pb-2 flex items-start gap-4">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: 'rgba(239,68,68,0.1)' }}>
+            <HiTrash className="text-red-500 text-2xl" />
+          </div>
+          <div className="flex-1 pt-1">
+            <h3 className="font-extrabold text-gray-900 text-base">Eliminar petición</h3>
+            <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+              ¿Estás seguro de eliminar{' '}
+              <span className="font-semibold text-gray-700">"{petition.title}"</span>?
+              Esta acción no se puede deshacer.
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="flex gap-3 px-5 pt-4"
+          style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+        >
+          <button
+            onClick={onClose}
+            className="flex-1 py-3.5 rounded-2xl border-2 border-gray-200 text-gray-600 font-semibold text-sm"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => onConfirm(petition._id)}
+            disabled={isLoading}
+            className="flex-1 py-3.5 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            style={{
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
+            }}
+          >
+            {isLoading ? (
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+            ) : (
+              <HiTrash className="text-base" />
+            )}
+            Eliminar
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // ─── Petition Card ─────────────────────────────────────────────────────────────
 const PetitionCard = ({ petition, onSign, onUnsign, onDelete, userId, isAdmin }) => {
   const [expanded, setExpanded] = useState(false);
@@ -456,6 +524,7 @@ const PetitionsPage = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [signingPetition, setSigningPetition] = useState(null);
+  const [confirmPetition, setConfirmPetition] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['petitions'],
@@ -487,15 +556,13 @@ const PetitionsPage = () => {
     mutationFn: (id) => petitionService.delete(id),
     onSuccess: () => {
       toast.success('Petición eliminada');
+      setConfirmPetition(null);
       queryClient.invalidateQueries({ queryKey: ['petitions'] });
     },
     onError: () => toast.error('Error al eliminar la petición'),
   });
 
-  const handleDelete = (petition) => {
-    if (!window.confirm(`¿Eliminar "${petition.title}"? Esta acción no se puede deshacer.`)) return;
-    deleteMutation.mutate(petition._id);
-  };
+  const handleDelete = (petition) => setConfirmPetition(petition);
 
   const isAdmin = user?.role === 'admin';
   const openCount = petitions.filter(p => p.isOpen).length;
@@ -625,6 +692,15 @@ const PetitionsPage = () => {
             isLoading={signMutation.isPending}
             onClose={() => setSigningPetition(null)}
             onConfirm={(id, img, ced) => signMutation.mutate({ id, signatureImage: img, cedula: ced })}
+          />
+        )}
+        {confirmPetition && (
+          <DeleteConfirmModal
+            key="del"
+            petition={confirmPetition}
+            isLoading={deleteMutation.isPending}
+            onClose={() => setConfirmPetition(null)}
+            onConfirm={(id) => deleteMutation.mutate(id)}
           />
         )}
       </AnimatePresence>
