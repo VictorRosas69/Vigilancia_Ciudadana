@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { HiCheck, HiLockClosed, HiX, HiPencil } from 'react-icons/hi';
+import { HiCheck, HiLockClosed, HiX, HiPencil, HiTrash } from 'react-icons/hi';
 import haptic from '../utils/haptic';
 import { useNavigate } from 'react-router-dom';
 import petitionService from '../services/petitionService';
@@ -269,7 +269,7 @@ const SignatureModal = ({ petition, onClose, onConfirm, isLoading }) => {
 };
 
 // ─── Petition Card ─────────────────────────────────────────────────────────────
-const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
+const PetitionCard = ({ petition, onSign, onUnsign, onDelete, userId, isAdmin }) => {
   const [expanded, setExpanded] = useState(false);
   const alreadySigned = petition.signatures?.some(
     s => s.user === userId || s.user?._id === userId
@@ -303,6 +303,16 @@ const PetitionCard = ({ petition, onSign, onUnsign, userId }) => {
               Para: {petition.recipientTitle} · {petition.city}
             </p>
           </div>
+          {isAdmin && (
+            <button
+              onClick={() => onDelete(petition)}
+              className="flex-shrink-0 w-9 h-9 rounded-2xl flex items-center justify-center transition-colors active:bg-red-100"
+              style={{ background: 'rgba(239,68,68,0.08)' }}
+              title="Eliminar petición"
+            >
+              <HiTrash className="text-red-500 text-base" />
+            </button>
+          )}
         </div>
 
         {/* Progreso */}
@@ -473,6 +483,21 @@ const PetitionsPage = () => {
     onError: () => toast.error('Error al retirar la firma'),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => petitionService.delete(id),
+    onSuccess: () => {
+      toast.success('Petición eliminada');
+      queryClient.invalidateQueries({ queryKey: ['petitions'] });
+    },
+    onError: () => toast.error('Error al eliminar la petición'),
+  });
+
+  const handleDelete = (petition) => {
+    if (!window.confirm(`¿Eliminar "${petition.title}"? Esta acción no se puede deshacer.`)) return;
+    deleteMutation.mutate(petition._id);
+  };
+
+  const isAdmin = user?.role === 'admin';
   const openCount = petitions.filter(p => p.isOpen).length;
 
   return (
@@ -583,8 +608,10 @@ const PetitionsPage = () => {
               key={petition._id}
               petition={petition}
               userId={user?._id || user?.id}
+              isAdmin={isAdmin}
               onSign={(p) => setSigningPetition(p)}
               onUnsign={(id) => unsignMutation.mutate(id)}
+              onDelete={handleDelete}
             />
           ))}
         </div>
