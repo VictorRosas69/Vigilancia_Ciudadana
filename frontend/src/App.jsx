@@ -52,9 +52,20 @@ const queryClient = new QueryClient({
   },
 });
 
+// Accesible para usuarios autenticados Y invitados
 const PrivateRoute = ({ children }) => {
-  const token = useAuthStore((state) => state.token);
-  return token ? children : <Navigate to="/login" replace />;
+  const token   = useAuthStore((state) => state.token);
+  const isGuest = useAuthStore((state) => state.isGuest);
+  return (token || isGuest) ? children : <Navigate to="/login" replace />;
+};
+
+// Solo para usuarios con cuenta — redirige invitados a /register
+const AuthOnlyRoute = ({ children }) => {
+  const token   = useAuthStore((state) => state.token);
+  const isGuest = useAuthStore((state) => state.isGuest);
+  if (token) return children;
+  if (isGuest) return <Navigate to="/register" replace />;
+  return <Navigate to="/login" replace />;
 };
 
 const PublicRoute = ({ children }) => {
@@ -101,22 +112,24 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          <Route path="/dashboard" element={<PrivateRoute><AdminDashboardPage /></PrivateRoute>} />
+          <Route path="/dashboard" element={<AuthOnlyRoute><AdminDashboardPage /></AuthOnlyRoute>} />
 
           <Route path="/" element={<PrivateRoute><AppLayout /></PrivateRoute>}>
+            {/* Accesibles para invitados */}
             <Route index element={<HomePage />} />
             <Route path="map" element={<MapPage />} />
-            <Route path="create-report" element={<CreateReportPage />} />
             <Route path="reports/:id" element={<ReportDetailPage />} />
-            <Route path="reports/:id/edit" element={<EditReportPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="admin" element={<AdminPage />} />
-            <Route path="stats" element={<StatsPage />} />
-            <Route path="petitions" element={<PetitionsPage />} />
-            <Route path="users/:id" element={<PublicProfilePage />} />
-            <Route path="messages" element={<MessagesPage />} />
-            <Route path="admin/messages" element={<AdminMessagesPage />} />
+            {/* Solo para usuarios con cuenta */}
+            <Route path="create-report" element={<AuthOnlyRoute><CreateReportPage /></AuthOnlyRoute>} />
+            <Route path="reports/:id/edit" element={<AuthOnlyRoute><EditReportPage /></AuthOnlyRoute>} />
+            <Route path="profile" element={<AuthOnlyRoute><ProfilePage /></AuthOnlyRoute>} />
+            <Route path="notifications" element={<AuthOnlyRoute><NotificationsPage /></AuthOnlyRoute>} />
+            <Route path="admin" element={<AuthOnlyRoute><AdminPage /></AuthOnlyRoute>} />
+            <Route path="stats" element={<AuthOnlyRoute><StatsPage /></AuthOnlyRoute>} />
+            <Route path="petitions" element={<AuthOnlyRoute><PetitionsPage /></AuthOnlyRoute>} />
+            <Route path="users/:id" element={<AuthOnlyRoute><PublicProfilePage /></AuthOnlyRoute>} />
+            <Route path="messages" element={<AuthOnlyRoute><MessagesPage /></AuthOnlyRoute>} />
+            <Route path="admin/messages" element={<AuthOnlyRoute><AdminMessagesPage /></AuthOnlyRoute>} />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />

@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,8 +13,10 @@ const pageVariants = {
 
 const AppLayout = () => {
   const queryClient = useQueryClient();
-  const token = useAuthStore(s => s.token);
+  const token   = useAuthStore(s => s.token);
+  const isGuest = useAuthStore(s => s.isGuest);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // SSE: real-time notifications with automatic exponential-backoff reconnection
   useEffect(() => {
@@ -62,6 +64,33 @@ const AppLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      {/* Banner modo invitado */}
+      {isGuest && (
+        <div className="sticky top-0 z-40 flex justify-center"
+          style={{ background: 'linear-gradient(90deg, #d97706 0%, #f59e0b 100%)' }}>
+          <div className="max-w-lg w-full px-4 py-2.5 flex items-center justify-between gap-3">
+            <span className="text-white text-xs font-semibold">
+              Modo invitado · Solo puedes ver las obras
+            </span>
+            <button
+              onClick={() => navigate('/register')}
+              className="active:scale-95 transition-transform flex-shrink-0"
+              style={{
+                background: '#ffffff',
+                color: '#92400e',
+                fontSize: '11px',
+                fontWeight: 700,
+                borderRadius: '999px',
+                padding: '4px 14px',
+              }}
+            >
+              Regístrate
+            </button>
+          </div>
+        </div>
+      )}
+
       <main className="max-w-lg mx-auto" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }}>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

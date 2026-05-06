@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiShieldCheck } from 'react-icons/hi';
+import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiShieldCheck, HiUserCircle } from 'react-icons/hi';
 import useAuthStore from '../store/authStore';
 import authService from '../services/authService';
 
@@ -11,7 +11,7 @@ const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
+  const { setAuth, enterAsGuest } = useAuthStore();
   const recaptchaRef = useRef(null);
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -216,6 +216,22 @@ const LoginPage = () => {
           <span className="text-xs text-gray-300 font-medium px-1">o</span>
           <div className="flex-1 h-px bg-gray-100" />
         </div>
+
+        {/* Botón invitado */}
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          type="button"
+          onClick={() => { enterAsGuest(); navigate('/'); }}
+          className="w-full py-3.5 rounded-2xl font-semibold text-sm flex items-center justify-center gap-2 transition-all mb-5"
+          style={{
+            border: '1.5px solid #e5e7eb',
+            color: '#6b7280',
+            background: '#f9fafb',
+          }}
+        >
+          <HiUserCircle className="text-[20px] text-gray-400" />
+          Entrar como invitado
+        </motion.button>
 
         {/* Registro */}
         <p className="text-center text-gray-400 text-sm">
